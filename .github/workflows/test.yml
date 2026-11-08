@@ -1,18 +1,28 @@
-name: Test
-on: [push, pull_request]
+name: Quality
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+  schedule:
+    - cron: '17 6 * * 1'
 permissions:
   contents: read
 jobs:
-  core:
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        shell: [dash, bash]
+  fast:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    env:
+      SHELLSPEC: .tools/shellspec/shellspec
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
-          node-version: '24'
+          node-version: '24.16.0'
+          cache: npm
+      - name: Install required shells and lint
+        run: sudo apt-get update && sudo apt-get install -y dash bash zsh shellcheck
       - name: Check out ShellSpec 0.28.1
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
@@ -20,8 +30,34 @@ jobs:
           ref: 90e48c950239f3b8a9fdfa3e869592872c77b981
           path: .tools/shellspec
           persist-credentials: false
-      - name: Run executable specification and interoperability checks
+      - run: sh scripts/setup.sh
+      - run: sh scripts/setup.sh --verify
+      - run: sh scripts/check.sh
         env:
           SHELLSPEC: .tools/shellspec/shellspec
-          YAMX_SHELL: ${{ matrix.shell }}
-        run: sh scripts/test.sh
+      - name: Fresh-checkout setup regression
+        run: node --test test/setup.test.mjs
+  alpine:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - name: BusyBox portability, native zsh, and complete gate
+        run: ENGINE=docker sh scripts/portability.sh
+  deep:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - name: Mutation and scaling checks in the bounded baseline environment
+        run: ENGINE=docker sh scripts/portability.sh --deep
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        if: always()
+        with:
+          name: scaling-measurements
+          path: .quality-out/benchmark.jsonl
+          if-no-files-found: warn

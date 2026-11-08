@@ -11,7 +11,7 @@ function withShell(run) {
   const file = join(directory, 'input');
   const shell = (operation, input) => {
     writeFileSync(file, input);
-    const result = spawnSync(process.env.YAMX_SHELL || 'sh', ['src/yamx.sh', operation, file]);
+    const result = spawnSync(process.env.YAMX_SHELL || 'sh', ['src/yamx.sh', operation, file], { timeout: 5000 });
     if (result.error) throw result.error;
     assert.equal(result.signal, null);
     return { status: result.status, stdout: result.stdout, stderr: result.stderr.toString() };

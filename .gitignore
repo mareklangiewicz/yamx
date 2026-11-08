@@ -2,3 +2,5 @@
 report/
 coverage/
 entries.tsv
+node_modules/
+.quality-out/

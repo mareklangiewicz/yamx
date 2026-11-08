@@ -54,7 +54,7 @@ export function generate(entries) {
   if (!Array.isArray(entries)) throw new TypeError('expected an array of entries');
   if (entries.length === 0) fail('E_EMPTY', 1, 'expected at least one entry');
   const seen = new Set();
-  return entries.map((entry, index) => {
+  return Array.from(entries, (entry, index) => {
     if (!Array.isArray(entry) || entry.length !== 2)
       fail('E_SYNTAX', index + 1, 'expected a key/value pair');
     const [key, value] = entry;

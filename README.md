@@ -31,8 +31,9 @@ See the [complete grammar and CLI contract](docs/core-0.md).
 
 ## Implementations
 
-- **POSIX shell:** `src/yamx.sh`, using shell builtins and POSIX `od` for byte
-  validation. No Bash extensions, `awk`, `sed`, or YAML library.
+- **POSIX shell/POSIX utilities:** `src/yamx.sh`, supported under dash, Bash,
+  and native zsh. Uses `od`, `awk`, `sort`, `cat`, `mkdir`, and `rm`, with
+  private temporary storage. No YAML library or JavaScript runtime dependency.
 - **JavaScript:** `src/yamx.mjs`, an independent dependency-free ES module,
   plus the Node CLI `src/cli.mjs`. No transpilation or bundling.
 
@@ -66,17 +67,24 @@ decoded values, generation, and diagnostics. The same suite runs against both
 implementations. Node's built-in test runner additionally checks the JS API,
 all possible input-byte values, and interoperability with shell.
 
-Install ShellSpec **0.28.1** and Node **24 or newer**, then run:
+Install ShellSpec **0.28.1**, Node **24 or newer**, dash, Bash, native zsh,
+and bounded ShellCheck (see [quality discipline](docs/quality.md)), then run:
 
 ```sh
-sh scripts/test.sh
-YAMX_SHELL=bash sh scripts/test.sh
+sh scripts/setup.sh
+sh scripts/check.sh
 ```
 
 Use `SHELLSPEC=/path/to/shellspec` if it is not on PATH. The CLI and spec runner
 are invoked through interpreters; executable file permissions are not needed.
-CI runs the shared specification with dash and Bash and uses a pinned ShellSpec
-commit. ShellSpec is a development dependency only.
+The gate requires dash, Bash, and native zsh and runs shared specs, API/CLI
+regressions, all-byte checks, seeded inputs, and an independent YAML 1.2 oracle.
+Setup installs the same gate as a local pre-push hook; verify it with
+`sh scripts/setup.sh --verify`. CI also requires Alpine/BusyBox portability,
+targeted mutation checks, and bounded scaling workloads. ShellSpec and the
+locked YAML oracle are development dependencies only. See
+[docs/quality.md](docs/quality.md) for commands, constraints, and completion rules.
+`sh scripts/test.sh` remains a focused single-shell behavioral runner.
 
 ## Design direction
 

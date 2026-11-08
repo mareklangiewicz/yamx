@@ -12,8 +12,9 @@ general YAML parser or introduce a framework for hypothetical future features.
 - Core-0 is an experimental starting point, specified in docs/core-0.md.
 - Keep future ideas separate from implemented guarantees.
 - Maintain independent POSIX shell and plain JavaScript implementations.
-- Shell runtime dependencies are currently builtins and POSIX od; document any
-  proposed new dependency. Do not silently replace the shell parser with JS.
+- Shell runtime dependencies are builtins and POSIX od, awk, sort, cat, mkdir,
+  and rm, with private temporary storage. Justify and test added dependencies.
+  Keep this implementation independent of JavaScript.
 - JavaScript uses native ES modules and Node builtins, with no build step or
   runtime packages. Keep the library independent of any GitHub Action wrapper.
 - Use real YAML 1.2 syntax and explicitly documented scalar semantics.
@@ -25,10 +26,13 @@ general YAML parser or introduce a framework for hypothetical future features.
 - Validation must enforce the same grammar as parsing.
 - Emitters must reject unrepresentable values; do not coerce or discard them.
 - An extension must preserve the meaning of documents accepted by its base.
+  Experimental profiles may intentionally change with their specs and tests;
+  migration/version ceremony waits until the project is declared stable.
 - Specify parameter relationships rather than assuming all profiles form a
   chain or that larger numeric values always broaden the language.
-- No claim of linear runtime, streaming, or formal correctness without evidence.
-  The current shell prototype buffers data and uses simple duplicate detection.
+- Avoid quadratic work in validate, parse, and generate, including long keys
+  and values. Explain costs and check adversarial scaling. Qualify claims about
+  interpreter/runtime internals; timing alone is not a complexity proof.
 
 ## Tests as documentation
 
@@ -41,7 +45,9 @@ cases, generation where applicable, and interaction with existing features.
 Assert independently expected results, not just agreement between parsers.
 Keep diagnostics useful and test stable error codes and line numbers.
 
-Run `sh scripts/test.sh` and `YAMX_SHELL=bash sh scripts/test.sh`.
+Before changing code or quality controls, read `docs/quality.md` for the
+regression-first workflow, resource budgets, and definition of done.
+Run `sh scripts/check.sh`; dash, Bash, and native zsh are required targets.
 Node's built-in tests supplement ShellSpec for API and cross-language checks.
 Document any checks that could not run. Change grammar, implementation, and
 executable examples together. Keep the implementation understandable before

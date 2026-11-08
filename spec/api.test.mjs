@@ -30,3 +30,19 @@ test('generation refuses unrepresentable values and malformed entries', () => {
   for (const [entries, code] of cases)
     assert.throws(() => generate(entries), error => error instanceof YamxError && error.code === code);
 });
+
+test('generation rejects sparse arrays instead of silently dropping entries', () => {
+  for (const entries of [new Array(1), [['ok', 'x'], , ['last', 'y']]]) {
+    assert.throws(() => generate(entries), error =>
+      error instanceof YamxError && error.code === 'E_SYNTAX');
+  }
+});
+
+test('API errors expose stable codes and one-based line numbers', () => {
+  assert.throws(() => parse("first: 'x'\nfirst: 'y'\n"), error =>
+    error instanceof YamxError && error.code === 'E_DUPLICATE' && error.line === 2);
+  assert.throws(() => generate([['first', 'x'], ['first', 'y']]), error =>
+    error instanceof YamxError && error.code === 'E_DUPLICATE' && error.line === 2);
+  assert.throws(() => parse("first: 'x'\nsecond: '\0'\n"), error =>
+    error instanceof YamxError && error.code === 'E_CHARACTER' && error.line === 2);
+});

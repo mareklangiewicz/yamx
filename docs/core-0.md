@@ -62,19 +62,24 @@ allowed, an empty key is not. Final LF is mandatory. There is no TSV quoting
 or escaping. Newline-containing values are outside this transport's domain;
 they must never be encoded as extra records by a caller.
 
-Both CLIs buffer their output until validation succeeds, so invalid input
-does not produce partial stdout. The shell prototype is for small documents:
-it buffers an `od` byte listing and output, and its simple duplicate-key search
-can take quadratic time. This is not yet a streaming or performance contract.
+Both CLIs stage output until validation succeeds, so invalid input produces no
+partial stdout. The shell CLI uses private temporary files, bounded byte/line
+passes, and sorted key records for duplicate detection. It avoids growing-prefix
+string operations, including native shell suffix scans that regress on long
+keys. This is not a streaming API or a formal runtime bound; see docs/quality.md
+for complexity reasoning, resource budgets, and scaling checks.
 
-The shell line grammar uses builtins; `od` prevents NUL and other invalid bytes
-from being silently dropped by shell input handling. The JavaScript CLI reads
+The shell implementation uses POSIX od, awk, sort, cat, mkdir, and rm, and runs
+under dash, Bash, and native zsh. Numeric `od` output prevents NUL and other
+invalid bytes from being silently dropped before grammar checks. The JS CLI reads
 bytes as Latin-1 solely for a lossless ASCII validation gate; this is not an
 alternative document encoding.
 
 ## Diagnostics
 
 Exit 0 means success, 1 means invalid data, and 2 means CLI usage or I/O failure.
+Nonregular inputs are rejected. Output-device failures also exit 2; unlike invalid
+input, a failing output device may have received some bytes before failing.
 Invalid-data diagnostics start with `CODE line N:`; line numbers are one-based.
 Error prose is explanatory and not a stable machine interface.
 

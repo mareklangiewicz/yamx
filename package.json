@@ -1,0 +1,14 @@
+{
+  "name": "yamx",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "test": "sh scripts/check.sh"
+  },
+  "devDependencies": {
+    "yaml": "2.9.1"
+  }
+}
