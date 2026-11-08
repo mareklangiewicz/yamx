@@ -46,3 +46,20 @@ Node's built-in tests supplement ShellSpec for API and cross-language checks.
 Document any checks that could not run. Change grammar, implementation, and
 executable examples together. Keep the implementation understandable before
 trying to optimize it.
+
+## Agent skills
+
+### Issue tracker
+
+Issues and specs live in GitHub Issues. Before tracker operations, read
+`docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+Use the five canonical triage labels. Before triaging or changing triage
+labels, read `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Single-context layout. Before exploring the codebase, read
+`docs/agents/domain.md`.
