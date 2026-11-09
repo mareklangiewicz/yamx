@@ -19,12 +19,15 @@ future features.
   strict language superset of M, preserving its YAML meanings and existing
   overlong-key acceptance. M remains the default; B is selected explicitly.
 - Keep future ideas separate from implemented guarantees.
-- Maintain independent POSIX shell and plain JavaScript implementations.
+- Maintain independent POSIX shell, plain JavaScript, and Lua implementations.
 - Shell runtime dependencies are builtins and POSIX od, awk, sort, cat, mkdir,
   and rm, with private temporary storage. Justify and test added dependencies.
   Keep this implementation independent of JavaScript.
 - JavaScript uses native ES modules and Node builtins, with no build step or
   runtime packages. Keep the library independent of any GitHub Action wrapper.
+- Lua targets Lua 5.1/LuaJIT and newer Lua, using builtins only in the library.
+  The Lua CLI additionally uses POSIX sh/test for regular-file checks.
+  See docs/lua.md for its ordered map, tagged sequence, and null conventions.
 - Use real YAML 1.2 syntax and explicitly documented scalar semantics.
 
 ## Behavioral contract

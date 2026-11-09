@@ -5,7 +5,7 @@ import { spawnSync } from 'node:child_process';
 import { join } from 'node:path';
 import { cli, fixture, root, shell } from './helpers.mjs';
 
-for (const implementation of ['shell', 'js']) {
+for (const implementation of ['shell', 'js', 'lua']) {
   test(`${implementation}: usage and input failures exit 2 without data`, () => fixture(({ file, directory, write }) => {
     write("name: 'x'\n");
     for (const args of [[], ['parse'], ['unknown', file], ['parse', file, 'extra'],

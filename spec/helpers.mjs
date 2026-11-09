@@ -16,8 +16,8 @@ export function fixture(run) {
 }
 
 export function cli(implementation, args, options = {}) {
-  const command = implementation === 'shell' ? shell : process.execPath;
-  const script = join(root, implementation === 'shell' ? 'src/yamx.sh' : 'src/cli.mjs');
+  const command = implementation === 'shell' ? shell : implementation === 'lua' ? (process.env.YAMX_LUA || 'lua5.1') : process.execPath;
+  const script = join(root, implementation === 'shell' ? 'src/yamx.sh' : implementation === 'lua' ? 'src/cli.lua' : 'src/cli.mjs');
   const result = spawnSync(command, [script, ...args], {
     cwd: root, encoding: 'utf8', timeout: 5000, maxBuffer: 16 * 1024 * 1024,
     ...options,

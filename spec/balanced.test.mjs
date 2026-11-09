@@ -19,7 +19,7 @@ const oracle = text => normalizeZero(yamlParse(text, { version: '1.2', schema: '
 function rejectAll(text, code, line, operation = 'parse') {
   if (operation === 'parse') assert.throws(() => parseB(text), error => error instanceof YamxError
     && (!code || error.code === code) && (!line || error.line === line), text);
-  for (const impl of ['shell', 'js']) {
+  for (const impl of ['shell', 'js', 'lua']) {
     const result = run(impl, operation, text);
     assert.equal(result.status, 1, `${impl}: ${JSON.stringify(text)}: ${result.stderr}`);
     assert.equal(result.stdout, '');
@@ -30,7 +30,7 @@ function acceptAll(text, expected, useOracle = true) {
   assert.deepEqual(parseB(text), expected);
   if (useOracle) assert.deepEqual(oracle(text), expected);
   const transport = nodeText(treeNodes(expected));
-  for (const impl of ['shell', 'js']) {
+  for (const impl of ['shell', 'js', 'lua']) {
     const result = run(impl, 'parse', text);
     assert.equal(result.status, 0, result.stderr);
     assert.equal(result.stderr, '');
@@ -75,7 +75,7 @@ test('B is a strict superset of M without changing M defaults or string semantic
     acceptAll(minimal, expected);
   }
   assert.throws(() => parse('name: bare\n'), YamxError);
-  for (const impl of ['shell', 'js']) {
+  for (const impl of ['shell', 'js', 'lua']) {
     const explicit = fixture(({ write }) => cli(impl, ['--profile', 'M', 'parse', write("name: 'x'\n")]));
     assert.equal(explicit.status, 0, explicit.stderr);
     assert.equal(explicit.stdout, 'name\tx\n');
@@ -127,7 +127,7 @@ test('B generation rejects malformed node transports atomically', () => {
     '0\tmap\t\t\n\n', '0\tmap\t\t',
   ]) rejectAll(text, undefined, undefined, 'generate');
   rejectAll('0\tmap\t\t\n1\tstr\ta\tx\n1\tstr\ta\ty\n', 'E_DUPLICATE', 3, 'generate');
-  for (const impl of ['shell', 'js']) {
+  for (const impl of ['shell', 'js', 'lua']) {
     const result = run(impl, 'generate', '0\tmap\t\t\n1\tint\tzero\t-0\n');
     assert.equal(result.status, 0, result.stderr);
     assert.equal(result.stdout, 'zero: 0\n');
@@ -150,7 +150,7 @@ test('B API generation refuses malformed values, cycles and sparse arrays', () =
 });
 
 test('B CLI has the same usage, I/O, cwd and output failure guarantees as M', () => fixture(({ write, directory }) => {
-  for (const impl of ['shell', 'js']) {
+  for (const impl of ['shell', 'js', 'lua']) {
     for (const args of [ ['--profile'], ['--profile', 'X', 'parse', write('a: x\n')],
       ['--profile', 'B', 'parse', directory], ['--profile', 'B', 'parse', '/dev/null'],
       ['--profile', 'B', 'parse', `${directory}/missing`], ['--profile', 'B', 'bogus', write('a: x\n')],

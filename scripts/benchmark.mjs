@@ -11,7 +11,7 @@ const input = join(directory, 'input');
 const full = process.argv.includes('--full');
 const sizes = full ? [250, 1000, 4000] : [100, 400, 1600];
 const targets = [['dash', 'src/yamx.sh'], ['bash', 'src/yamx.sh'], ['zsh', 'src/yamx.sh'],
-  [process.execPath, 'src/cli.mjs']];
+  [process.execPath, 'src/cli.mjs'], ['lua5.1', 'src/cli.lua'], ['luajit', 'src/cli.lua'], ['lua5.4', 'src/cli.lua']];
 const records = [];
 const started = performance.now();
 try {
@@ -40,7 +40,7 @@ try {
             samples.push(performance.now() - before);
           }
           samples.sort((a, b) => a - b);
-          const record = { target: script.endsWith('.sh') ? command : 'node', shape, operation,
+          const record = { target: script.endsWith('.mjs') ? 'node' : command, shape, operation,
             size, bytes: Buffer.byteLength(text), medianMs: +samples[Math.floor(samples.length / 2)].toFixed(2) };
           records.push(record);
           console.log(JSON.stringify(record));

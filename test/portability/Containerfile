@@ -1,7 +1,7 @@
 # Node 24.16.0 / Alpine 3.22. The digest fixes the base image; apk repositories
 # still receive fixes, so installed utility versions are recorded by the job.
 FROM docker.io/library/node@sha256:191c9f0080fcbbc6547a85dc0ff7988072214a355aabdc1d2ec55a7dae5eea8a
-RUN apk add --no-cache bash dash zsh shellcheck git
+RUN apk add --no-cache bash dash zsh shellcheck git lua5.1 lua5.4 luajit
 RUN git clone --no-checkout https://github.com/shellspec/shellspec.git /opt/shellspec \
     && git -C /opt/shellspec checkout 90e48c950239f3b8a9fdfa3e869592872c77b981
 COPY package.json package-lock.json /opt/dependencies/

@@ -7,7 +7,7 @@ if [ -z "${SHELLSPEC:-}" ] && [ -x .tools/shellspec/shellspec ]; then
 fi
 case "${1:-}" in
   --verify)
-    for utility in node dash bash zsh od awk sort cat mkdir rm timeout; do
+    for utility in node dash bash zsh lua5.1 luajit lua5.4 od awk sort cat mkdir rm timeout; do
       command -v "$utility" >/dev/null 2>&1 || {
         printf 'Missing required tool: %s\n' "$utility" >&2
         exit 1

@@ -5,6 +5,8 @@ Describe 'YAM(M) — Minimal'
     cat > "$input"
     if [ "${YAMX_IMPL:-shell}" = js ]; then
       node src/cli.mjs "$1" "$input"
+    elif [ "${YAMX_IMPL:-shell}" = lua ]; then
+      "${YAMX_LUA:-lua5.1}" src/cli.lua "$1" "$input"
     else
       "${YAMX_SHELL:-sh}" src/yamx.sh "$1" "$input"
     fi

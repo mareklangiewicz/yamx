@@ -8,6 +8,15 @@ import { fileURLToPath } from 'node:url';
 const root = fileURLToPath(new URL('../', import.meta.url));
 const shell = process.env.YAMX_SHELL || 'dash';
 const mutations = [
+  ['Lua byte gate', 'src/yamx.lua', 'if bad then', 'if false then'],
+  ['Lua null preservation', 'src/yamx.lua', "elseif n.kind == 'null' then value = M.null", "elseif n.kind == 'null' then value = false"],
+  ['Lua partial output', 'src/cli.lua', "local output = ''", "io.stdout:write('leak\\n'); local output = ''"],
+  ['Lua duplicate keys', 'src/yamx.lua', 'if seen[key] then', 'if false then'],
+  ['Lua sparse lists', 'src/yamx.lua', 'if largest ~= count then', 'if false then'],
+  ['B Lua duplicate keys', 'src/yamx.lua', 'if parent.keys[key] then', 'if false then'],
+  ['B Lua scalar types', 'src/yamx.lua', "return 'bool', value", "return 'str', value"],
+  ['B Lua apostrophe encoding', 'src/yamx.lua', `value:gsub("'", "''")`, 'value'],
+
   ['shell duplicate keys', 'src/yamx.sh', '[ -z "$number" ] || fail E_DUPLICATE', ': || fail E_DUPLICATE'],
   ['shell NUL acceptance', 'src/yamx.sh', '!(last >= 32 && last <= 126)', '!(last == 0 || (last >= 32 && last <= 126))'],
   ['shell value corruption', 'src/yamx.sh', String.raw`printf "%s\t%s\n", key, value`, String.raw`printf "%s\t%sx\n", key, value`],
@@ -29,8 +38,8 @@ const mutations = [
 
 function test(directory, label) {
   const minimal = ['spec/api.test.mjs', 'spec/cli.test.mjs', 'spec/generated.test.mjs', 'spec/interop.test.mjs'];
-  const specs = label === 'baseline' ? ['spec/balanced.test.mjs', ...minimal]
-    : label.startsWith('B ') ? ['spec/balanced.test.mjs'] : minimal;
+  const specs = label.includes('Lua') ? ['spec/lua.test.mjs'] : label === 'baseline' ? ['spec/lua.test.mjs', 'spec/balanced.test.mjs', ...minimal]
+    : label.startsWith('B ') ? ['spec/balanced.test.mjs'] : ['spec/lua.test.mjs', ...minimal];
   const result = spawnSync(process.execPath, ['--test', '--test-reporter=tap', ...specs], {
     cwd: directory, env: { ...process.env, YAMX_SHELL: shell }, encoding: 'utf8',
     timeout: 60000, maxBuffer: 4 * 1024 * 1024,
@@ -56,7 +65,9 @@ for (const [name, file, before, after] of mutations) {
     if (!occurrences) throw new Error(`Stale mutation: ${name}`);
     // Some faults affect both parse and generate; replace every matching site.
     writeFileSync(path, source.replaceAll(before, after));
-    const syntax = file.endsWith('.awk')
+    const syntax = file.endsWith('.lua')
+      ? spawnSync('lua5.1', ['-e', `assert(loadfile(${JSON.stringify(path)}))`], { timeout: 5000, encoding: 'utf8' })
+      : file.endsWith('.awk')
       ? spawnSync('awk', ['-v', 'operation=generate', '-f', path], {
         input: '0\tmap\t\t\n', timeout: 5000, encoding: 'utf8',
         env: { ...process.env, YAMX_KEYS: join(directory, 'keys'), YAMX_ERROR: join(directory, 'error') },

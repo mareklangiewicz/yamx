@@ -8,7 +8,12 @@ apk info -v
 case "${1:-}" in
   --deep)
     for shell in dash bash zsh; do
-      YAMX_SHELL=$shell node scripts/mutation.mjs
+      case "$shell" in
+        dash) lua=lua5.1 ;;
+        bash) lua=luajit ;;
+        zsh) lua=lua5.4 ;;
+      esac
+      YAMX_SHELL=$shell YAMX_LUA=$lua node scripts/mutation.mjs
     done
     node scripts/benchmark.mjs --full > /out/benchmark.jsonl
     node scripts/benchmark-balanced.mjs --full >> /out/benchmark.jsonl

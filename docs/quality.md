@@ -8,7 +8,8 @@ experiment.
 
 ## Fast loop
 
-Install Node 24+, dash, Bash, native zsh, ShellSpec 0.28.1, and ShellCheck.
+Install Node 24+, dash, Bash, native zsh, Lua 5.1, LuaJIT, Lua 5.4,
+ShellSpec 0.28.1, and ShellCheck.
 Local lint uses `shellcheck-capped` (Marek's systemd cgroup wrapper); on another
 Linux machine provide an equivalent memory-capped wrapper. The CI and Alpine
 runners may use plain ShellCheck inside their disposable environments.
@@ -38,10 +39,13 @@ the npm cache populated by setup, without network access.
 The gate runs bounded ShellCheck, JavaScript syntax checks, the shared ShellSpec
 contract under dash/Bash/zsh, the JS version of that contract, and Node API/CLI,
 all-byte, interoperability, seeded-generation, and independent YAML checks.
+Lua runs the shared specification plus API/CLI checks under Lua 5.1, LuaJIT
+and Lua 5.4; YAMX_LUA selects the runtime in focused test invocations.
 Every target is required; missing tools fail. Independent checks continue after
 failure, and the final exit status aggregates the failures. The local pre-push
 hook runs the same gate as CI. Hooks can be bypassed, so they supplement CI.
-The development target is roughly 30 seconds, not a brittle timing assertion.
+The complete three-language matrix takes a few minutes; individual stages
+retain the budgets below rather than a brittle total-time assertion.
 
 ShellCheck has a 30-second wall/CPU budget and a 512 MiB data-segment limit,
 in addition to the local cgroup or container memory limit. Limits apply only to
@@ -54,8 +58,8 @@ between concurrent gate invocations.
 
 For each confirmed bug, add a public API or CLI reproducer, observe it fail on
 the old implementation, then fix it and retain the example. Exercise the shared
-specification when the guarantee applies to both implementations. Every grammar
-change covers acceptance, decoded meaning, nearby rejection, generation, and
+specification when the guarantee applies to all three implementations.
+Every grammar change covers acceptance, decoded meaning, nearby rejection, generation, and
 interactions with existing constructs. Tests state independently expected
 results; implementation agreement and round trips alone are insufficient.
 
@@ -68,7 +72,7 @@ a failed check, not evidence that malformed input was rejected correctly.
 
 The development-only `yaml` package is locked with integrity metadata. Oracle
 checks explicitly select YAML 1.2 Core and preserve keys as a Map. They compare
-accepted documents against values generated independently of either parser.
+accepted documents against values generated independently of any parser.
 The oracle does not define which documents either profile accepts. Deterministic
 seeds make generated failures repeatable; minimize any discovered failure into
 a permanent explained example. See https://eemeli.org/yaml/ for the oracle API.
@@ -107,6 +111,13 @@ an awk hash table. This is an independent shell/POSIX implementation, not a
 wrapper around the JavaScript parser. Input must remain stable while processing.
 Temporary disk use scales with input and output; this is not a streaming API.
 
+Lua uses bounded byte/line scans, ordered node lists, and per-map key tables.
+Quoted strings copy spans into a list and join once; trimming scans from the
+end, avoiding unanchored suffix searches on long runs of interior spaces.
+Collection depth is bounded at 32. Lua hash-table lookups have expected rather
+than guaranteed constant cost; this is not a worst-case linearity proof.
+Both benchmark drivers include Lua 5.1, LuaJIT and Lua 5.4.
+
 ## Deeper loops
 
 ```sh
@@ -122,8 +133,8 @@ by lockfile. Alpine utility packages still receive repository updates; their
 versions are printed so results can be interpreted. Ubuntu CI also records the
 runner image and uses Node 24.16.0. Updating pins is a deliberate tested change.
 
-The mutation catalogue injects meaningful faults into disposable copies of both
-implementations. A clean baseline and syntactically valid mutants are required;
+The mutation catalogue injects meaningful faults into disposable copies of
+all three implementations. A clean baseline and syntactically valid mutants are required;
 timeouts and process failures abort the check. Every listed mutant must be
 caught. A survivor calls for investigation, not lowering a coverage target.
 When refactoring changes a mutation anchor, update it and verify detection.

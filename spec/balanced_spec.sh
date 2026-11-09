@@ -4,6 +4,8 @@ Describe 'YAM(B) — Balanced'
     cat > "$input"
     if [ "${YAMX_IMPL:-shell}" = js ]; then
       node src/cli.mjs --profile B "$1" "$input"
+    elif [ "${YAMX_IMPL:-shell}" = lua ]; then
+      "${YAMX_LUA:-lua5.1}" src/cli.lua --profile B "$1" "$input"
     else
       "${YAMX_SHELL:-sh}" src/yamx.sh --profile B "$1" "$input"
     fi

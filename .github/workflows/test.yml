@@ -22,7 +22,7 @@ jobs:
           node-version: '24.16.0'
           cache: npm
       - name: Install required shells and lint
-        run: sudo apt-get update && sudo apt-get install -y dash bash zsh shellcheck
+        run: sudo apt-get update && sudo apt-get install -y dash bash zsh shellcheck lua5.1 lua5.4 luajit
       - name: Check out ShellSpec 0.28.1
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:

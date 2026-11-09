@@ -27,8 +27,8 @@ is not the destination.
 
 Experimental. **YAM(M) — Minimal** and **YAM(B) — Balanced** are implemented.
 Their grammars can evolve with their specifications and tests. M remains the
-default; select B explicitly with `--profile B` in either CLI or the second
-argument `'B'` in the JavaScript API. There is no general profile configuration
+default; select B explicitly with `--profile B` in any CLI or the second
+argument `'B'` in the JavaScript or Lua API. There is no general profile configuration
 API yet.
 
 ```yaml
@@ -47,15 +47,19 @@ See the [complete grammar and CLI contract](docs/minimal.md).
 - **POSIX shell/POSIX utilities:** `src/yamx.sh`, with `src/balanced.awk` beside
   it for B, supported under dash, Bash, and native zsh. Uses `od`, `awk`, `sort`, `cat`, `mkdir`, and `rm`, with
   private temporary storage. No YAML library or JavaScript runtime dependency.
+- **Lua:** `src/yamx.lua`, an independent module for Lua 5.1/LuaJIT and newer
+  Lua, plus `src/cli.lua`. The library uses only builtins; the CLI additionally
+  uses POSIX sh/test for file-type checks. See [the Lua API](docs/lua.md).
 - **JavaScript:** `src/yamx.mjs`, an independent dependency-free ES module,
   plus the Node CLI `src/cli.mjs`. No transpilation or bundling.
 
-Both CLIs take an operation and a readable, stable regular file:
+All three CLIs take an operation and a readable, stable regular file:
 
 ```sh
 sh src/yamx.sh validate examples/minimal.yaml
 sh src/yamx.sh parse examples/minimal.yaml > entries.tsv
 node src/cli.mjs generate entries.tsv
+lua5.1 src/cli.lua parse examples/minimal.yaml
 ```
 
 By default, `parse` emits a restricted TSV representation: key, one TAB, value, LF.
@@ -88,12 +92,12 @@ generate(tree, 'B');
 
 [ShellSpec](https://github.com/shellspec/shellspec) is the primary behavioral
 specification. Nested examples explain accepted input, rejected constructs,
-decoded values, generation, and diagnostics. The same suite runs against both
-implementations. Node's built-in test runner additionally checks the JS API,
-all possible input-byte values, and interoperability with shell.
+decoded values, generation, and diagnostics. The same suite runs against all three
+implementations. Node's built-in test runner additionally checks the JS and Lua
+APIs, all possible input-byte values, and interoperability across the CLIs.
 
 Install ShellSpec **0.28.1**, Node **24 or newer**, dash, Bash, native zsh,
-and bounded ShellCheck (see [quality discipline](docs/quality.md)), then run:
+Lua **5.1**, **LuaJIT**, **5.4**, and bounded ShellCheck (see [quality discipline](docs/quality.md)), then run:
 
 ```sh
 sh scripts/setup.sh
@@ -102,8 +106,8 @@ sh scripts/check.sh
 
 Use `SHELLSPEC=/path/to/shellspec` if it is not on PATH. The CLI and spec runner
 are invoked through interpreters; executable file permissions are not needed.
-The gate requires dash, Bash, and native zsh and runs shared specs, API/CLI
-regressions, all-byte checks, seeded inputs, and an independent YAML 1.2 oracle.
+The gate requires dash, Bash, native zsh, Lua 5.1, LuaJIT, and Lua 5.4. It runs
+shared specs, API/CLI regressions, all-byte checks, seeded inputs, and an independent YAML 1.2 oracle.
 Setup installs the same gate as a local pre-push hook; verify it with
 `sh scripts/setup.sh --verify`. CI also requires Alpine/BusyBox portability,
 targeted mutation checks, and bounded scaling workloads. ShellSpec and the

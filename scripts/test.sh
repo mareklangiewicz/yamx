@@ -11,7 +11,7 @@ trap 'exit 2' HUP INT TERM
 TMPDIR=$temporary
 export TMPDIR
 # YAMX_SHELL selects the parser interpreter independently of ShellSpec's shell.
-for implementation in shell js; do
+for implementation in shell js lua; do
   printf '\nImplementation: %s (shell: %s)\n' "$implementation" "${YAMX_SHELL:-sh}"
   YAMX_IMPL=$implementation "$SHELLSPEC" --format documentation spec
 done
