@@ -1,14 +1,15 @@
 -- Independent Lua 5.1+ implementation of YAM(M) and YAM(B).
 local M = {}
-local map_mt, seq_mt = {}, {}
 local error_mt = { __tostring = function(e)
   return e.code .. ' line ' .. e.line .. ': ' .. e.message
 end }
-M.null = setmetatable({}, { __tostring = function() return 'yamx.null' end })
 local function fail(code, line, message)
   error(setmetatable({ code = code, line = line, message = message }, error_mt), 0)
 end
 function M.is_error(value) return getmetatable(value) == error_mt end
+-- @balanced-begin
+local map_mt, seq_mt = {}, {}
+M.null = setmetatable({}, { __tostring = function() return 'yamx.null' end })
 local function tagged(value, mt)
   if value == nil then value = {} end
   if type(value) ~= 'table' or getmetatable(value) ~= nil then
@@ -25,10 +26,13 @@ function M.kind(value)
   if mt == map_mt then return 'map' end
   if mt == seq_mt then return 'seq' end
 end
+-- @balanced-end
 local function profile(value)
-  if value == nil then return 'M' end
-  if value ~= 'M' and value ~= 'B' then error('unknown profile', 3) end
-  return value
+  if value == nil or value == 'M' then return 'M' end
+-- @balanced-begin
+  if value == 'B' then return 'B' end
+-- @balanced-end
+  error('unknown profile', 3)
 end
 local function check_text(text, tabs)
   if type(text) ~= 'string' then error('expected a string', 3) end
@@ -49,6 +53,7 @@ local function check_key(key, line)
     fail('E_KEY', line, 'expected a non-reserved lowercase identifier')
   end
 end
+-- @balanced-begin
 local function integer(text, line)
   local digits = text:sub(1, 1) == '-' and text:sub(2) or text
   if not digits:match('^%d+$') or (#digits > 1 and digits:sub(1, 1) == '0')
@@ -57,6 +62,7 @@ local function integer(text, line)
   end
   return text == '-0' and '0' or text
 end
+-- @balanced-end
 -- Reject holes and extra properties without relying on Lua's undefined # result
 -- for sparse tables, or invoking caller metamethods. Work is proportional to size.
 local function dense(value, line)
@@ -102,6 +108,7 @@ local function parse_minimal(text, transport)
   minimal(entries)
   return entries
 end
+-- @balanced-begin
 local function trim_right(text)
   local last = #text
   while last > 0 and text:byte(last) == 32 do last = last - 1 end
@@ -323,15 +330,26 @@ local function nodes_yaml(nodes)
   end
   return table.concat(out)
 end
+-- @balanced-end
 function M.parse(text, selected)
+-- @balanced-begin
   if profile(selected) == 'B' then return tree(yaml_nodes(text)) end
+-- @balanced-end
+  profile(selected)
   return parse_minimal(text)
 end
 function M.validate(text, selected)
-  if profile(selected) == 'B' then check_nodes(yaml_nodes(text)) else parse_minimal(text) end
+-- @balanced-begin
+  if profile(selected) == 'B' then check_nodes(yaml_nodes(text)); return end
+-- @balanced-end
+  profile(selected)
+  parse_minimal(text)
 end
 function M.generate(value, selected)
+-- @balanced-begin
   if profile(selected) == 'B' then return nodes_yaml(tree_nodes(value)) end
+-- @balanced-end
+  profile(selected)
   minimal(value)
   local out = {}
   for i, entry in ipairs(value) do out[i] = entry[1] .. ": '" .. entry[2] .. "'\n" end
@@ -339,19 +357,27 @@ function M.generate(value, selected)
 end
 -- Development transports shared by all three CLIs, not general-purpose TSV.
 function M.parse_transport(text, selected)
+-- @balanced-begin
   if profile(selected) == 'B' then return tree(transport_nodes(text)) end
+-- @balanced-end
+  profile(selected)
   return parse_minimal(text, true)
 end
 function M.generate_transport(value, selected)
   local out = {}
-  if profile(selected) == 'B' then
+  profile(selected)
+-- @balanced-begin
+  if selected == 'B' then
     for i, n in ipairs(tree_nodes(value)) do
       out[i] = string.format('%d', n.depth) .. '\t' .. n.kind .. '\t' .. n.key .. '\t' .. n.value .. '\n'
     end
   else
+-- @balanced-end
     minimal(value)
     for i, entry in ipairs(value) do out[i] = entry[1] .. '\t' .. entry[2] .. '\n' end
+-- @balanced-begin
   end
+-- @balanced-end
   return table.concat(out)
 end
 return M

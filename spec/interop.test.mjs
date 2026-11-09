@@ -4,7 +4,8 @@ import { mkdtempSync, writeFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { cli, fixture } from './helpers.mjs';
-import { generate, parse } from '../src/yamx.mjs';
+import { jsLibrary } from './helpers.mjs';
+const { generate, parse } = await import(jsLibrary);
 
 function withShell(run, implementation = 'shell') {
   const directory = mkdtempSync(join(tmpdir(), 'yamx-test-'));
@@ -19,7 +20,7 @@ function withShell(run, implementation = 'shell') {
   try { run(shell); } finally { rmSync(directory, { recursive: true, force: true }); }
 }
 
-for (const implementation of ['shell', 'lua']) {
+for (const implementation of ['shell', ...(process.env.YAMX_JS_BYTES ? ['js'] : []), 'lua']) {
   test(`${implementation}: each byte is either preserved as a string character or rejected`, () => {
     withShell(shell => {
       for (let byte = 0; byte <= 255; byte++) {
@@ -58,7 +59,7 @@ test('shell and JavaScript can consume each other\'s generated documents', () =>
   });
 });
 
-for (const profile of ['M', 'B']) test(`all CLIs exchange ${profile} transports`, () => fixture(({ write }) => {
+for (const profile of (process.env.YAMX_DISTRIBUTION ? ['M'] : ['M', 'B'])) test(`all CLIs exchange ${profile} transports`, () => fixture(({ write }) => {
   const input = profile === 'M' ? "a: 'x'\nb: ''\n" : "a:\n  - null\n  - false\n  - {}\nb: 'can''t'\n";
   const prefix = ['--profile', profile];
   for (const source of ['shell', 'js', 'lua']) {

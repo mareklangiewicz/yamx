@@ -90,6 +90,7 @@ fi
 # become quadratic on long keys (especially zsh), even without growing buffers.
 : > "$workspace/keys" || io_error 'cannot stage keys'
 : > "$workspace/error" || io_error 'cannot stage diagnostics'
+# @balanced-begin
 if [ "$profile" = B ]; then
   # Use the bundled awk source beside this entry point, independent of caller cwd.
   case $0 in */*) source_dir=${0%/*} ;; *) source_dir=. ;; esac
@@ -105,6 +106,7 @@ if [ "$profile" = B ]; then
     io_error "cannot decode or stage input (awk exit $result)"
   fi
 else
+# @balanced-end
 if YAMX_KEYS="$workspace/keys" YAMX_ERROR="$workspace/error" awk -v operation="$operation" '
   function reject(code, message) {
     print code " line " NR ": " message > ENVIRON["YAMX_ERROR"]
@@ -144,11 +146,14 @@ else
   io_error "cannot decode or stage input (awk exit $result)"
 fi
 
+# @balanced-begin
 fi
+# @balanced-end
 
 tab=$(printf '\t')
 # Group equal keys and order their occurrences. Choose the earliest repeated
 # input line across all groups so duplicate diagnostics retain input order.
+# @balanced-begin
 if [ "$profile" = B ]; then
   sort -t "$tab" -k1,1n -k2,2 -k3,3n "$workspace/keys" > "$workspace/sorted" || io_error 'cannot sort keys'
   number=$(awk -F "$tab" '
@@ -157,13 +162,16 @@ if [ "$profile" = B ]; then
     END { if (duplicate) print duplicate }
   ' "$workspace/sorted") || io_error 'cannot check duplicate keys'
 else
+# @balanced-end
 sort -t "$tab" -k1,1 -k2,2n "$workspace/keys" > "$workspace/sorted" || io_error 'cannot sort keys'
 number=$(awk -F "$tab" '
   NR > 1 && $1 == previous { if (!duplicate || $2 < duplicate) duplicate = $2 }
   { previous = $1 }
   END { if (duplicate) print duplicate }
 ' "$workspace/sorted") || io_error 'cannot check duplicate keys'
+# @balanced-begin
 fi
+# @balanced-end
 [ -z "$number" ] || fail E_DUPLICATE 'duplicate mapping key'
 
 # Invalid input never publishes partial stdout. Output-device failures may.

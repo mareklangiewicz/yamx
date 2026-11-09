@@ -1,7 +1,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { parse as yamlParse } from 'yaml';
-import { parse, generate } from '../src/yamx.mjs';
+import { jsLibrary } from './helpers.mjs';
+const { parse, generate } = await import(jsLibrary);
 import { cli, fixture } from './helpers.mjs';
 
 function random(seed) {

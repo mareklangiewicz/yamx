@@ -36,6 +36,13 @@ The standalone `node --test test/setup.test.mjs` checks fresh-clone installation
 verification, custom-hook preservation, and propagation of gate failures. It uses
 the npm cache populated by setup, without network access.
 
+The gate first rejects stale standalone artifacts and tests the drift check
+itself. It also runs the M shared specification and interface/CLI/byte/oracle
+cases against the exact distributed files in isolated directories with only the
+documented runtime file sets. See [standalone artifacts](distributions.md) for
+assembly, provenance and complete sizes. Each distribution stage retains the
+same two-minute budget.
+
 The gate runs bounded ShellCheck, JavaScript syntax checks, the shared ShellSpec
 contract under dash/Bash/zsh, the JS version of that contract, and Node API/CLI,
 all-byte, interoperability, seeded-generation, and independent YAML checks.
@@ -138,6 +145,10 @@ all three implementations. A clean baseline and syntactically valid mutants are 
 timeouts and process failures abort the check. Every listed mutant must be
 caught. A survivor calls for investigation, not lowering a coverage target.
 When refactoring changes a mutation anchor, update it and verify detection.
+Applicable M mutations are assembled into standalone artifacts and must also
+fail standalone assertions; the clean standalone baseline must pass first.
+Deep runs record the same M scaling workloads for copied standalone artifacts,
+marked with `distribution: true` in the JSONL.
 
 Scaling workloads exercise increasing record counts, long keys/values, duplicates,
 and invalid bytes near EOF across all operations and required shells plus JS.

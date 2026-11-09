@@ -51,7 +51,12 @@ See the [complete grammar and CLI contract](docs/minimal.md).
   Lua, plus `src/cli.lua`. The library uses only builtins; the CLI additionally
   uses POSIX sh/test for file-type checks. See [the Lua API](docs/lua.md).
 - **JavaScript:** `src/yamx.mjs`, an independent dependency-free ES module,
-  plus the Node CLI `src/cli.mjs`. No transpilation or bundling.
+  plus the Node CLI `src/cli.mjs`. No runtime packages or consumer build step.
+
+Readable M-only artifacts are available as a technical preview in
+[`dist/minimal`](dist/minimal). See the [complete file sets, measurements and
+assembly/verification process](docs/distributions.md); the reuse license decision
+is still pending.
 
 All three CLIs take an operation and a readable, stable regular file:
 

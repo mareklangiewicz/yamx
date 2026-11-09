@@ -1,6 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { generate, parse, validate, YamxError } from '../src/yamx.mjs';
+import { jsLibrary } from './helpers.mjs';
+const { generate, parse, validate, YamxError } = await import(jsLibrary);
 
 test('every supported string byte survives generation and parsing', () => {
   for (let code = 32; code <= 126; code++) {

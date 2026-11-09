@@ -1,6 +1,8 @@
 import { readFileSync, statSync, writeSync } from 'node:fs';
 import { checkText, generate, parse, validate, YamxError } from './yamx.mjs';
+// @balanced-begin
 import { yamlNodes, nodeText, transportNodes, nodesYaml, validateBalanced } from './balanced.mjs';
+// @balanced-end
 
 const args = process.argv.slice(2);
 let profile = 'M';
@@ -16,11 +18,14 @@ try {
   // latin1 preserves every input byte for the ASCII gate, including invalid UTF-8.
   const text = readFileSync(file).toString('latin1');
   let result = '';
+// @balanced-begin
   if (profile === 'B') {
     if (operation === 'generate') result = nodesYaml(transportNodes(text));
     else if (operation === 'parse') result = nodeText(yamlNodes(text));
     else validateBalanced(text);
-  } else if (operation === 'generate') {
+  } else
+// @balanced-end
+  if (operation === 'generate') {
     checkText(text, true);
     const entries = text.slice(0, -1).split('\n').map((line, index) => {
       const fields = line.split('\t');

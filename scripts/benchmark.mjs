@@ -5,13 +5,17 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import { isolate } from './isolated-distribution.mjs';
+const isolated = process.argv.includes('--distribution') ? isolate() : null;
 const root = fileURLToPath(new URL('../', import.meta.url));
 const directory = mkdtempSync(join(tmpdir(), 'yamx-benchmark-'));
 const input = join(directory, 'input');
 const full = process.argv.includes('--full');
 const sizes = full ? [250, 1000, 4000] : [100, 400, 1600];
-const targets = [['dash', 'src/yamx.sh'], ['bash', 'src/yamx.sh'], ['zsh', 'src/yamx.sh'],
+let targets = [['dash', 'src/yamx.sh'], ['bash', 'src/yamx.sh'], ['zsh', 'src/yamx.sh'],
   [process.execPath, 'src/cli.mjs'], ['lua5.1', 'src/cli.lua'], ['luajit', 'src/cli.lua'], ['lua5.4', 'src/cli.lua']];
+if (isolated) targets = targets.map(([command, script]) => [command, join(isolated.directory,
+  script.endsWith('.sh') ? 'shell/yamx.sh' : script.endsWith('.mjs') ? 'js/cli.mjs' : 'lua/cli.lua')]);
 const records = [];
 const started = performance.now();
 try {
@@ -40,7 +44,7 @@ try {
             samples.push(performance.now() - before);
           }
           samples.sort((a, b) => a - b);
-          const record = { target: script.endsWith('.mjs') ? 'node' : command, shape, operation,
+          const record = { distribution: Boolean(isolated), target: script.endsWith('.mjs') ? 'node' : command, shape, operation,
             size, bytes: Buffer.byteLength(text), medianMs: +samples[Math.floor(samples.length / 2)].toFixed(2) };
           records.push(record);
           console.log(JSON.stringify(record));
@@ -49,4 +53,4 @@ try {
     }
   }
   console.error(`PASS: ${records.length} bounded workload measurements; ${((performance.now() - started) / 1000).toFixed(1)}s`);
-} finally { rmSync(directory, { recursive: true, force: true }); }
+} finally { isolated?.close(); rmSync(directory, { recursive: true, force: true }); }

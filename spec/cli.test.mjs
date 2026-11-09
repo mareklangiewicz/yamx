@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { openSync, closeSync, readdirSync, writeFileSync, existsSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
 import { join } from 'node:path';
-import { cli, fixture, root, shell } from './helpers.mjs';
+import { cli, fixture, cliScript, shell } from './helpers.mjs';
 
 for (const implementation of ['shell', 'js', 'lua']) {
   test(`${implementation}: usage and input failures exit 2 without data`, () => fixture(({ file, directory, write }) => {
@@ -55,7 +55,7 @@ test('shell reports missing runtime utilities and cleans up temporary files', ()
   const command = shell.startsWith('/') ? shell : process.env.PATH.split(':')
     .map(directory => join(directory, shell)).find(path => existsSync(path));
   assert.ok(command, `required shell ${shell} is installed`);
-  const missing = spawnSync(command, [join(root, 'src/yamx.sh'), 'parse', file], {
+  const missing = spawnSync(command, [cliScript('shell'), 'parse', file], {
     encoding: 'utf8', timeout: 5000, env: { ...process.env, PATH: directory },
   });
   assert.ifError(missing.error);
