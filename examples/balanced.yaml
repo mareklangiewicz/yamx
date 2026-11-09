@@ -1,0 +1,13 @@
+# YAM(B) - Balanced
+name: YAMX
+active: true
+retries: 3
+optional: null
+items:
+  -
+    name: 'Marek''s tools'
+    url: https://example.org/a#fragment # URL, then comment
+    labels:
+      - shell
+      - portable
+empty: {}

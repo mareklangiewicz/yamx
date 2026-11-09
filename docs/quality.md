@@ -69,7 +69,7 @@ a failed check, not evidence that malformed input was rejected correctly.
 The development-only `yaml` package is locked with integrity metadata. Oracle
 checks explicitly select YAML 1.2 Core and preserve keys as a Map. They compare
 accepted documents against values generated independently of either parser.
-The oracle does not define which YAML documents YAM(M) accepts. Deterministic
+The oracle does not define which documents either profile accepts. Deterministic
 seeds make generated failures repeatable; minimize any discovered failure into
 a permanent explained example. See https://eemeli.org/yaml/ for the oracle API.
 
@@ -81,7 +81,7 @@ preferred; justified sorting is allowed. Explain the algorithm and use
 adversarial scaling measurements as evidence. Timing cannot prove asymptotics,
 and POSIX/JS interfaces do not promise formal bounds for every implementation.
 
-The shell implementation performs byte validation and line decoding in separate
+The M shell implementation performs byte validation and line decoding in separate
 bounded scans. It stages records once, sorts key/line records to detect duplicates,
 and releases output only after success. It retains no growing key/output string
 and uses no per-entry scan of earlier keys or native-shell suffix-pattern scan.
@@ -89,6 +89,16 @@ Sorting is the non-linear stage (comparison sorting normally scales as K log K
 for K records); comparisons also process key bytes. JS uses bounded scans,
 Set lookups, arrays, and a final join; its expected costs depend on the engine.
 Do not advertise proven worst-case linear runtime.
+
+B uses the same byte gate and staged output, with a bounded-depth POSIX awk
+layout stack and typed preorder node records. Duplicate keys are sorted by
+mapping identity and key; no growing path strings are constructed. String
+escaping uses whole-record substitutions. See docs/balanced.md for its grammar,
+transport and costs. Shared specs, API/CLI tests, seeded nested trees, and YAML
+oracle checks cover both profiles. M's unbounded implicit-key acceptance is a
+known YAML compatibility limitation inherited by B; strict oracle checks use
+keys within YAML's 1,024-character limit, while long-key workloads check behavior
+and resource use separately.
 
 Shell runtime dependencies are POSIX od, awk, sort, cat, mkdir, and rm. Private
 temporary storage replaces potentially quadratic in-memory shell operations.
@@ -120,8 +130,9 @@ When refactoring changes a mutation anchor, update it and verify detection.
 
 Scaling workloads exercise increasing record counts, long keys/values, duplicates,
 and invalid bytes near EOF across all operations and required shells plus JS.
-Full runs record three samples and report the median as JSONL. A workload gets
-15 seconds and the complete measurement run four minutes. CI preserves the
+Both M and B have separate workload drivers. Full runs record three samples
+and report the median as JSONL. A workload gets
+15 seconds and each profile's measurement driver gets four minutes. CI preserves the
 measurements as an artifact. These generous hang guards are gates; relative
 performance thresholds await measurements stable enough to justify them.
 

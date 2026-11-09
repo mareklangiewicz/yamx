@@ -1,11 +1,7 @@
-// YAM(M) — Minimal; current status: experimental. Entries are [key, value] pairs, both strings.
-export class YamxError extends Error {
-  constructor(code, line, message) {
-    super(`${code} line ${line}: ${message}`);
-    this.code = code;
-    this.line = line;
-  }
-}
+// Profile dispatch and YAM(M) pair-list API; B uses Map/array trees.
+import { checkText, YamxError } from './common.mjs';
+import { parseBalanced, validateBalanced, generateBalanced } from './balanced.mjs';
+export { checkText, YamxError } from './common.mjs';
 
 const fail = (code, line, message) => { throw new YamxError(code, line, message); };
 const keyPattern = /^[a-z_][a-z0-9_-]*$/;
@@ -20,21 +16,9 @@ function checkEntry(key, value, line, seen) {
     fail('E_STRING', line, 'expected printable ASCII without apostrophes');
 }
 
-// Shared by the CLI's YAML input and its deliberately restricted TSV transport.
-export function checkText(text, allowTab = false) {
-  if (typeof text !== 'string') throw new TypeError('expected a string');
-  if (text.length === 0) fail('E_EMPTY', 1, 'expected at least one entry');
-  let line = 1;
-  for (const char of text) {
-    const code = char.codePointAt(0);
-    if (char === '\n') line++;
-    else if (!(code >= 32 && code <= 126) && !(allowTab && char === '\t'))
-      fail('E_CHARACTER', line, 'unsupported byte');
-  }
-  if (!text.endsWith('\n')) fail('E_NEWLINE', line, 'expected a final LF');
-}
-
-export function parse(text) {
+export function parse(text, profile = 'M') {
+  if (profile === 'B') return parseBalanced(text);
+  if (profile !== 'M') throw new TypeError('unknown profile');
   checkText(text);
   const seen = new Set();
   return text.slice(0, -1).split('\n').map((line, index) => {
@@ -46,11 +30,15 @@ export function parse(text) {
   });
 }
 
-export function validate(text) {
+export function validate(text, profile = 'M') {
+  if (profile === 'B') return validateBalanced(text);
+  if (profile !== 'M') throw new TypeError('unknown profile');
   parse(text); // Validation and parsing deliberately use the same grammar.
 }
 
-export function generate(entries) {
+export function generate(entries, profile = 'M') {
+  if (profile === 'B') return generateBalanced(entries);
+  if (profile !== 'M') throw new TypeError('unknown profile');
   if (!Array.isArray(entries)) throw new TypeError('expected an array of entries');
   if (entries.length === 0) fail('E_EMPTY', 1, 'expected at least one entry');
   const seen = new Set();

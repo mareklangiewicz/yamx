@@ -25,11 +25,11 @@ try {
   run('Static checks', 'sh', ['scripts/lint.sh']);
   for (const shell of ['dash', 'bash', 'zsh']) {
     run(`Required shell: ${shell}`, shell, ['-c', 'exit 0']);
-    run(`YAM(M) specification: ${shell}`, shellspec, ['--format', 'progress', 'spec'], {
+    run(`YAM(M) and YAM(B) specifications: ${shell}`, shellspec, ['--format', 'progress', 'spec'], {
       YAMX_IMPL: 'shell', YAMX_SHELL: shell,
     });
     run(`API, bytes, generated cases, CLI: ${shell}`, process.execPath,
-      ['--test', 'spec/api.test.mjs', 'spec/cli.test.mjs', 'spec/generated.test.mjs', 'spec/interop.test.mjs'],
+      ['--test', 'spec/balanced.test.mjs', 'spec/api.test.mjs', 'spec/cli.test.mjs', 'spec/generated.test.mjs', 'spec/interop.test.mjs'],
       { YAMX_SHELL: shell });
   }
   run('JavaScript shared specification', shellspec, ['--format', 'progress', 'spec'], { YAMX_IMPL: 'js' });

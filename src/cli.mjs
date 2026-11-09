@@ -1,9 +1,13 @@
 import { readFileSync, statSync, writeSync } from 'node:fs';
 import { checkText, generate, parse, validate, YamxError } from './yamx.mjs';
+import { yamlNodes, nodeText, transportNodes, nodesYaml, validateBalanced } from './balanced.mjs';
 
-const [operation, file, ...extra] = process.argv.slice(2);
-if (!file || extra.length || !['validate', 'parse', 'generate'].includes(operation)) {
-  console.error('usage: node src/cli.mjs validate|parse|generate FILE');
+const args = process.argv.slice(2);
+let profile = 'M';
+if (args[0] === '--profile') { args.shift(); profile = args.shift(); }
+const [operation, file, ...extra] = args;
+if (!['M', 'B'].includes(profile) || !file || extra.length || !['validate', 'parse', 'generate'].includes(operation)) {
+  console.error('usage: node src/cli.mjs [--profile M|B] validate|parse|generate FILE');
   process.exit(2);
 }
 
@@ -12,7 +16,11 @@ try {
   // latin1 preserves every input byte for the ASCII gate, including invalid UTF-8.
   const text = readFileSync(file).toString('latin1');
   let result = '';
-  if (operation === 'generate') {
+  if (profile === 'B') {
+    if (operation === 'generate') result = nodesYaml(transportNodes(text));
+    else if (operation === 'parse') result = nodeText(yamlNodes(text));
+    else validateBalanced(text);
+  } else if (operation === 'generate') {
     checkText(text, true);
     const entries = text.slice(0, -1).split('\n').map((line, index) => {
       const fields = line.split('\t');

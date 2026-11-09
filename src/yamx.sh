@@ -1,5 +1,5 @@
 #!/bin/sh
-# YAM(M) — Minimal CLI: native dash, bash, and zsh; standard POSIX utilities only.
+# YAM(M) / YAM(B) CLI: native dash, bash, and zsh; standard POSIX utilities only.
 LC_ALL=C
 export LC_ALL
 set -f
@@ -14,8 +14,15 @@ io_error() {
 }
 
 number=1
+profile=M
+if [ "${1:-}" = --profile ]; then
+  [ "$#" -ge 2 ] || { printf 'missing profile\n' >&2; exit 2; }
+  profile=$2
+  shift 2
+fi
+case "$profile" in M|B) ;; *) printf 'unknown profile: %s\n' "$profile" >&2; exit 2 ;; esac
 if [ "$#" -ne 2 ]; then
-  printf 'usage: sh src/yamx.sh validate|parse|generate FILE\n' >&2
+  printf 'usage: sh src/yamx.sh [--profile M|B] validate|parse|generate FILE\n' >&2
   exit 2
 fi
 operation=$1
@@ -83,6 +90,21 @@ fi
 # become quadratic on long keys (especially zsh), even without growing buffers.
 : > "$workspace/keys" || io_error 'cannot stage keys'
 : > "$workspace/error" || io_error 'cannot stage diagnostics'
+if [ "$profile" = B ]; then
+  # Use the bundled awk source beside this entry point, independent of caller cwd.
+  case $0 in */*) source_dir=${0%/*} ;; *) source_dir=. ;; esac
+  if YAMX_KEYS="$workspace/keys" YAMX_ERROR="$workspace/error" awk -v operation="$operation" \
+    -f "$source_dir/balanced.awk" < "$file" > "$workspace/output"; then
+    :
+  else
+    result=$?
+    if [ -s "$workspace/error" ]; then
+      cat "$workspace/error" >&2
+      exit 1
+    fi
+    io_error "cannot decode or stage input (awk exit $result)"
+  fi
+else
 if YAMX_KEYS="$workspace/keys" YAMX_ERROR="$workspace/error" awk -v operation="$operation" '
   function reject(code, message) {
     print code " line " NR ": " message > ENVIRON["YAMX_ERROR"]
@@ -122,15 +144,26 @@ else
   io_error "cannot decode or stage input (awk exit $result)"
 fi
 
+fi
+
 tab=$(printf '\t')
 # Group equal keys and order their occurrences. Choose the earliest repeated
 # input line across all groups so duplicate diagnostics retain input order.
+if [ "$profile" = B ]; then
+  sort -t "$tab" -k1,1n -k2,2 -k3,3n "$workspace/keys" > "$workspace/sorted" || io_error 'cannot sort keys'
+  number=$(awk -F "$tab" '
+    NR > 1 && $1 == parent && $2 == previous { if (!duplicate || $3 < duplicate) duplicate = $3 }
+    { parent = $1; previous = $2 }
+    END { if (duplicate) print duplicate }
+  ' "$workspace/sorted") || io_error 'cannot check duplicate keys'
+else
 sort -t "$tab" -k1,1 -k2,2n "$workspace/keys" > "$workspace/sorted" || io_error 'cannot sort keys'
 number=$(awk -F "$tab" '
   NR > 1 && $1 == previous { if (!duplicate || $2 < duplicate) duplicate = $2 }
   { previous = $1 }
   END { if (duplicate) print duplicate }
 ' "$workspace/sorted") || io_error 'cannot check duplicate keys'
+fi
 [ -z "$number" ] || fail E_DUPLICATE 'duplicate mapping key'
 
 # Invalid input never publishes partial stdout. Output-device failures may.

@@ -15,9 +15,9 @@ future features.
   do not. Experimental status is separate from profile names.
 - YAM(M) — Minimal is implemented, currently experimental, and specified in
   docs/minimal.md.
-- YAM(B) — Balanced names a future general-purpose profile balancing expressive
-  power with simple implementation. Its feature set is undecided; keep it
-  separate from implemented guarantees.
+- YAM(B) — Balanced is implemented and specified in docs/balanced.md. It is a
+  strict language superset of M, preserving its YAML meanings and existing
+  overlong-key acceptance. M remains the default; B is selected explicitly.
 - Keep future ideas separate from implemented guarantees.
 - Maintain independent POSIX shell and plain JavaScript implementations.
 - Shell runtime dependencies are builtins and POSIX od, awk, sort, cat, mkdir,

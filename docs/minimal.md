@@ -1,13 +1,13 @@
 # YAM(M) — Minimal
 
-YAM(M) is the currently implemented profile in the YAM(X) family. Its status is
+YAM(M) is the Minimal profile in the YAM(X) family. Its status is
 experimental; that status is separate from its name. Its deliberately small
 grammar makes implementation costs visible.
 
 Profile letters identify curated feature bundles. The name Minimal does not
 establish an inclusion relationship with other profiles; specifications must
 define those relationships. See the [family overview](../README.md) for naming
-and the future YAM(B) — Balanced profile, whose feature set is undecided.
+and the implemented [YAM(B) — Balanced](balanced.md) superset.
 
 ## Document grammar
 
@@ -33,6 +33,12 @@ Additional constraints:
   the quotes are literal. There is no escape processing.
 - No other bytes or syntax are accepted, including blank lines, CRLF, BOM,
   tabs, non-ASCII, apostrophes inside values, comments, or nested collections.
+
+Known compatibility limitation: keys currently have no length bound. YAML 1.2
+limits implicit keys to 1,024 characters, so longer keys accepted here are not
+strictly valid YAML. B inherits this acceptance to preserve its superset
+relationship. Long-key smoke/scaling tests check behavior, not YAML conformance;
+strict independent oracle checks use keys within YAML's limit.
 
 ASCII is also valid UTF-8. YAML compatibility here targets **YAML 1.2 Core
 schema**, not the different implicit typing of some YAML 1.1 loaders. Keys such
@@ -108,7 +114,8 @@ The profile configuration API is not implemented. Before changing a profile or
 adding another, define its grammar and relationships to existing profiles.
 Possible grammar extensions include apostrophe escaping, blank lines,
 whole-line comments, restricted plain strings, and bounded mapping nesting.
-These are exploratory ideas, not a decided feature set for YAM(B) — Balanced.
+B now implements several of these choices; its current grammar is defined in
+[balanced.md](balanced.md). Further changes remain open.
 Exact indentation width and maximum collection depth are separate parameters.
 Generation/parsing must preserve meaning throughout any comparable profiles.
 

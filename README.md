@@ -9,9 +9,11 @@ relationships. Experimental status is separate from profile names.
 
 - **YAM(M) — Minimal:** the currently implemented, deliberately tiny flat mapping
   profile. Its grammar and CLI contract are specified in [docs/minimal.md](docs/minimal.md).
-- **YAM(B) — Balanced:** a future general-purpose profile intended to balance
+- **YAM(B) — Balanced:** a general-purpose profile balancing
   expressive power with simple implementation through a carefully selected
-  bundle of YAML features. Its feature set is undecided and it is not implemented.
+  bundle of YAML features. The first version adds block collections, comments,
+  quoted and plain strings, booleans, null, and safe decimal integers. See
+  [the grammar, API, and node transport](docs/balanced.md).
 
 Parameters may be booleans, numbers, enums, or sets: allowed scalar styles,
 indentation width, maximum collection depth, and so on.
@@ -23,8 +25,11 @@ is not the destination.
 
 ## Status
 
-Experimental bootstrap. Only **YAM(M) — Minimal** is implemented. Its precise
-choices are provisional; there is no implemented profile configuration API yet.
+Experimental. **YAM(M) — Minimal** and **YAM(B) — Balanced** are implemented.
+Their grammars can evolve with their specifications and tests. M remains the
+default; select B explicitly with `--profile B` in either CLI or the second
+argument `'B'` in the JavaScript API. There is no general profile configuration
+API yet.
 
 ```yaml
 name: 'yamx'
@@ -39,8 +44,8 @@ See the [complete grammar and CLI contract](docs/minimal.md).
 
 ## Implementations
 
-- **POSIX shell/POSIX utilities:** `src/yamx.sh`, supported under dash, Bash,
-  and native zsh. Uses `od`, `awk`, `sort`, `cat`, `mkdir`, and `rm`, with
+- **POSIX shell/POSIX utilities:** `src/yamx.sh`, with `src/balanced.awk` beside
+  it for B, supported under dash, Bash, and native zsh. Uses `od`, `awk`, `sort`, `cat`, `mkdir`, and `rm`, with
   private temporary storage. No YAML library or JavaScript runtime dependency.
 - **JavaScript:** `src/yamx.mjs`, an independent dependency-free ES module,
   plus the Node CLI `src/cli.mjs`. No transpilation or bundling.
@@ -53,10 +58,19 @@ sh src/yamx.sh parse examples/minimal.yaml > entries.tsv
 node src/cli.mjs generate entries.tsv
 ```
 
-`parse` emits a restricted TSV representation: key, one TAB, value, LF.
+By default, `parse` emits a restricted TSV representation: key, one TAB, value, LF.
 YAM(M) values cannot contain tabs or newlines, so this transport is unambiguous.
 `generate` consumes that same representation. It is a development interface,
 not a general-purpose TSV format or a commitment for future profiles.
+
+B uses typed preorder node records, carrying depth, kind, key and value:
+
+```sh
+sh src/yamx.sh --profile B parse examples/balanced.yaml > nodes.tsv
+node src/cli.mjs --profile B generate nodes.tsv
+```
+
+See [B's node transport](docs/balanced.md#node-transport) for the record contract.
 
 ```js
 import { parse, generate, validate } from './src/yamx.mjs';
@@ -65,6 +79,9 @@ const text = "name: 'yamx'\n";
 validate(text);                    // returns undefined, or throws YamxError
 parse(text);                       // [['name', 'yamx']]
 generate([['name', 'yamx']]);       // "name: 'yamx'\n"
+
+const tree = parse('items:\n  - shell\n  - portable\n', 'B'); // Map + array
+generate(tree, 'B');
 ```
 
 ## Executable specification
@@ -107,9 +124,15 @@ locked YAML oracle are development dependencies only. See
   evidence of correctness, not a formal proof.
 
 The initial use case is software catalogs containing names, versions, URLs,
-and metadata that small shell scripts can consume. Nesting, plain strings,
-comments, and numeric depth/indentation parameters are possible next steps.
+and metadata that small shell scripts can consume. B adds nesting, plain
+strings and comments. Its exact two-space indentation
+and maximum node depth of 32 are fixed for now; configurable parameters remain
+future work.
 General JSON syntax, anchors/aliases, tags, and document streams are outside
 the current scope; adding any feature requires keeping validation simple.
 
 See [AGENTS.md](AGENTS.md) for contribution guidance.
+
+Both profiles currently inherit M's acceptance of keys longer than YAML's
+1,024-character implicit-key limit. This is a known YAML compatibility limitation;
+see [the profile specification](docs/minimal.md).
