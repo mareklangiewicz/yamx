@@ -9,7 +9,7 @@ function random(seed) {
   return () => { state = (Math.imul(state, 1664525) + 1013904223) >>> 0; return state; };
 }
 
-test('seeded Core-0 documents agree with independently generated values and YAML 1.2 Core', () => fixture(({ write }) => {
+test('seeded YAM(M) documents agree with independently generated values and YAML 1.2 Core', () => fixture(({ write }) => {
   for (let seed = 1; seed <= 8; seed++) {
     const next = random(seed);
     const entries = [['yes', 'true'], ['__proto__', 'ordinary'], ['constructor', '01.20']];

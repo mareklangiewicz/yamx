@@ -1,4 +1,4 @@
-// Core-0 is experimental. Entries are [key, value] pairs, both strings.
+// YAM(M) — Minimal; current status: experimental. Entries are [key, value] pairs, both strings.
 export class YamxError extends Error {
   constructor(code, line, message) {
     super(`${code} line ${line}: ${message}`);

@@ -25,7 +25,7 @@ try {
   run('Static checks', 'sh', ['scripts/lint.sh']);
   for (const shell of ['dash', 'bash', 'zsh']) {
     run(`Required shell: ${shell}`, shell, ['-c', 'exit 0']);
-    run(`Core-0 specification: ${shell}`, shellspec, ['--format', 'progress', 'spec'], {
+    run(`YAM(M) specification: ${shell}`, shellspec, ['--format', 'progress', 'spec'], {
       YAMX_IMPL: 'shell', YAMX_SHELL: shell,
     });
     run(`API, bytes, generated cases, CLI: ${shell}`, process.execPath,

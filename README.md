@@ -2,10 +2,19 @@
 
 **A parameterized family of YAML subsets.**
 
-Think of the name as **YAM(X)**: X selects features and parameters. YAMX is the
-plain project name, without punctuation. Parameters may be booleans, numbers,
-enums, or sets: allowed scalar styles, indentation width, maximum collection
-depth, and so on.
+**YAMX** is the project name; **YAM(X)** denotes the family. Profile letters
+identify curated feature bundles, rather than individual features or use cases.
+Names do not imply an inclusion hierarchy: specifications define profile
+relationships. Experimental status is separate from profile names.
+
+- **YAM(M) — Minimal:** the currently implemented, deliberately tiny flat mapping
+  profile. Its grammar and CLI contract are specified in [docs/minimal.md](docs/minimal.md).
+- **YAM(B) — Balanced:** a future general-purpose profile intended to balance
+  expressive power with simple implementation through a carefully selected
+  bundle of YAML features. Its feature set is undecided and it is not implemented.
+
+Parameters may be booleans, numbers, enums, or sets: allowed scalar styles,
+indentation width, maximum collection depth, and so on.
 
 The goal is to make each supported profile easy to **validate, parse, and
 generate**, including on small systems using shell scripts. The smallest
@@ -14,9 +23,8 @@ is not the destination.
 
 ## Status
 
-Experimental bootstrap. Only **Core-0**, a deliberately tiny flat mapping
-profile, is implemented. Its precise choices are provisional; there is no
-implemented profile configuration API yet.
+Experimental bootstrap. Only **YAM(M) — Minimal** is implemented. Its precise
+choices are provisional; there is no implemented profile configuration API yet.
 
 ```yaml
 name: 'yamx'
@@ -24,10 +32,10 @@ description: 'A parameterized family of YAML subsets'
 status: 'experimental'
 ```
 
-Core-0 uses lowercase identifier keys and single-line ASCII strings in single
+YAM(M) uses lowercase identifier keys and single-line ASCII strings in single
 quotes, with no apostrophe escaping. Every line ends in LF. Blank lines,
 comments, nesting, implicit types, and alternative spellings are rejected.
-See the [complete grammar and CLI contract](docs/core-0.md).
+See the [complete grammar and CLI contract](docs/minimal.md).
 
 ## Implementations
 
@@ -40,13 +48,13 @@ See the [complete grammar and CLI contract](docs/core-0.md).
 Both CLIs take an operation and a readable, stable regular file:
 
 ```sh
-sh src/yamx.sh validate examples/core.yaml
-sh src/yamx.sh parse examples/core.yaml > entries.tsv
+sh src/yamx.sh validate examples/minimal.yaml
+sh src/yamx.sh parse examples/minimal.yaml > entries.tsv
 node src/cli.mjs generate entries.tsv
 ```
 
 `parse` emits a restricted TSV representation: key, one TAB, value, LF.
-Core-0 values cannot contain tabs or newlines, so this transport is unambiguous.
+YAM(M) values cannot contain tabs or newlines, so this transport is unambiguous.
 `generate` consumes that same representation. It is a development interface,
 not a general-purpose TSV format or a commitment for future profiles.
 

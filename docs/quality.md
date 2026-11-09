@@ -69,7 +69,7 @@ a failed check, not evidence that malformed input was rejected correctly.
 The development-only `yaml` package is locked with integrity metadata. Oracle
 checks explicitly select YAML 1.2 Core and preserve keys as a Map. They compare
 accepted documents against values generated independently of either parser.
-The oracle does not define which YAML documents Core-0 accepts. Deterministic
+The oracle does not define which YAML documents YAM(M) accepts. Deterministic
 seeds make generated failures repeatable; minimize any discovered failure into
 a permanent explained example. See https://eemeli.org/yaml/ for the oracle API.
 

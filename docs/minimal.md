@@ -1,7 +1,13 @@
-# Core-0: experimental starting grammar
+# YAM(M) — Minimal
 
-This is one concrete profile, not a final universal base. Its limitations make
-implementation costs visible before optional features are introduced.
+YAM(M) is the currently implemented profile in the YAM(X) family. Its status is
+experimental; that status is separate from its name. Its deliberately small
+grammar makes implementation costs visible.
+
+Profile letters identify curated feature bundles. The name Minimal does not
+establish an inclusion relationship with other profiles; specifications must
+define those relationships. See the [family overview](../README.md) for naming
+and the future YAM(B) — Balanced profile, whose feature set is undecided.
 
 ## Document grammar
 
@@ -52,12 +58,12 @@ concurrent file modification handling are not implemented.
 
 | Operation | Input | Successful stdout |
 |---|---|---|
-| validate | Core-0 document | Nothing |
-| parse | Core-0 document | One `key TAB value LF` record per entry |
-| generate | Restricted TSV records | Canonical Core-0 document |
+| validate | YAM(M) document | Nothing |
+| parse | YAM(M) document | One `key TAB value LF` record per entry |
+| generate | Restricted TSV records | Canonical YAM(M) document |
 
 The TSV transport has exactly one TAB separator per record and at least one
-record. Keys and values must be representable in Core-0; an empty value is
+record. Keys and values must be representable in YAM(M); an empty value is
 allowed, an empty key is not. Final LF is mandatory. There is no TSV quoting
 or escaping. Newline-containing values are outside this transport's domain;
 they must never be encoded as extra records by a caller.
@@ -98,10 +104,11 @@ rules; do not rely on diagnostic precedence beyond documented examples.
 
 ## Next decisions
 
-The feature/parameter model is not implemented. Before adding it, choose the
-next concrete use case and define that extension's grammar and inclusion
-relationship. Likely candidates are apostrophe escaping, blank lines,
+The profile configuration API is not implemented. Before changing a profile or
+adding another, define its grammar and relationships to existing profiles.
+Possible grammar extensions include apostrophe escaping, blank lines,
 whole-line comments, restricted plain strings, and bounded mapping nesting.
+These are exploratory ideas, not a decided feature set for YAM(B) — Balanced.
 Exact indentation width and maximum collection depth are separate parameters.
 Generation/parsing must preserve meaning throughout any comparable profiles.
 

@@ -1,4 +1,4 @@
-Describe 'YAMX Core-0'
+Describe 'YAM(M) — Minimal'
   # Run this same specification for each implementation; see scripts/test.sh.
   run_yamx() {
     input="$SHELLSPEC_TMPBASE/input"
@@ -193,7 +193,7 @@ Describe 'YAMX Core-0'
     End
   End
 
-  Describe 'generation from the Core-0 TSV transport'
+  Describe 'generation from the YAM(M) TSV transport'
     It 'emits the canonical spelling, preserving empty values and spaces'
       Data printf 'name\tneovim\nempty\t\nspace\t  x  \n'
       When call run_yamx generate

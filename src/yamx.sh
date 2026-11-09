@@ -1,5 +1,5 @@
 #!/bin/sh
-# Core-0 CLI: native dash, bash, and zsh; standard POSIX utilities only.
+# YAM(M) — Minimal CLI: native dash, bash, and zsh; standard POSIX utilities only.
 LC_ALL=C
 export LC_ALL
 set -f
@@ -106,7 +106,7 @@ if YAMX_KEYS="$workspace/keys" YAMX_ERROR="$workspace/error" awk -v operation="$
     }
     if (key !~ /^[a-z_][a-z0-9_-]*$/ || key == "true" || key == "false" || key == "null")
       reject("E_KEY", "expected a non-reserved lowercase identifier")
-    if (index(value, "\047")) reject("E_STRING", "apostrophes are not supported in Core-0 strings")
+    if (index(value, "\047")) reject("E_STRING", "apostrophes are not supported in YAM(M) strings")
     print key "\t" NR > ENVIRON["YAMX_KEYS"]
     if (operation == "generate") printf "%s: \047%s\047\n", key, value
     else if (operation == "parse") printf "%s\t%s\n", key, value

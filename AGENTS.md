@@ -2,14 +2,22 @@
 
 ## Purpose
 
-YAMX means YAM(X): a parameterized family of small YAML subsets. X can contain
-boolean, numeric, enum, and set parameters. Small parsers and validators,
-especially shell implementations, are a design goal. Do not drift toward a
-general YAML parser or introduce a framework for hypothetical future features.
+YAMX is the project name; YAM(X) denotes a parameterized family of small YAML
+subsets. Parameters may be boolean, numeric, enum, or set values. Small parsers
+and validators, especially shell implementations, are a design goal. Do not
+drift toward a general YAML parser or introduce a framework for hypothetical
+future features.
 
 ## Current scope
 
-- Core-0 is an experimental starting point, specified in docs/core-0.md.
+- Profile letters identify curated feature bundles, rather than individual
+  features or use cases. Specifications define inclusion relationships; names
+  do not. Experimental status is separate from profile names.
+- YAM(M) — Minimal is implemented, currently experimental, and specified in
+  docs/minimal.md.
+- YAM(B) — Balanced names a future general-purpose profile balancing expressive
+  power with simple implementation. Its feature set is undecided; keep it
+  separate from implemented guarantees.
 - Keep future ideas separate from implemented guarantees.
 - Maintain independent POSIX shell and plain JavaScript implementations.
 - Shell runtime dependencies are builtins and POSIX od, awk, sort, cat, mkdir,
