@@ -40,7 +40,9 @@ available through the session's UI tools, so visual layout, controls, clipboard
 and direct-file behavior have not been browser-verified. The revised theme
 JavaScript also passed syntax verification.
 
-Marek authorized publishing this multi-layout preview to GitHub Pages. GitHub
-rejected Pages setup for the private yamx repository on the account's Free plan
-(HTTP 422: "Your current plan does not support GitHub Pages for this repository.").
-Publication is awaiting a hosting choice; no repository visibility was changed.
+Marek authorized publishing this multi-layout preview to GitHub Pages and
+explicitly making yamx public to enable Pages on the Free plan. The site is
+published from the root of the gh-pages branch: index.html is a copy of this
+self-contained HTML file, alongside .nojekyll and a source-pointer README.
+Update that copy when changing the preview. Keep all three layouts live for
+later cross-device review; publication does not close the presentation decision.
