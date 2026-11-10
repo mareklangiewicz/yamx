@@ -25,6 +25,7 @@ try {
     else validateBalanced(text);
   } else
 // @balanced-end
+// @minimal-begin
   if (operation === 'generate') {
     checkText(text, true);
     const entries = text.slice(0, -1).split('\n').map((line, index) => {
@@ -39,6 +40,7 @@ try {
   } else {
     result = parse(text).map(([key, value]) => `${key}\t${value}\n`).join('');
   }
+// @minimal-end
   // Synchronous writes make output errors part of the CLI exit contract.
   const bytes = Buffer.from(result);
   for (let offset = 0; offset < bytes.length;)

@@ -18,8 +18,8 @@ fi
 (
   ulimit -d 524288
   ulimit -t 30
-  timeout 30 "$lint" -s sh src/yamx.sh dist/minimal/yamx.sh scripts/*.sh hooks/*
+  timeout 30 "$lint" -s sh src/yamx.sh dist/minimal/yamx.sh dist/balanced/yamx.sh scripts/*.sh hooks/*
 )
-for file in dist/minimal/*.mjs src/*.mjs scripts/*.mjs spec/*.mjs test/*.mjs; do
+for file in dist/minimal/*.mjs dist/balanced/*.mjs src/*.mjs scripts/*.mjs spec/*.mjs test/*.mjs; do
   node --check "$file"
 done

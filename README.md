@@ -53,8 +53,8 @@ See the [complete grammar and CLI contract](docs/minimal.md).
 - **JavaScript:** `src/yamx.mjs`, an independent dependency-free ES module,
   plus the Node CLI `src/cli.mjs`. No runtime packages or consumer build step.
 
-Readable M-only artifacts are available as a technical preview in
-[`dist/minimal`](dist/minimal). See the [complete file sets, measurements and
+Readable profile-specific artifacts are available as a technical preview in
+[`dist/minimal`](dist/minimal) and [`dist/balanced`](dist/balanced). See the [complete file sets, measurements and
 assembly/verification process](docs/distributions.md); the reuse license decision
 is still pending.
 

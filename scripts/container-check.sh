@@ -18,6 +18,7 @@ case "${1:-}" in
     node scripts/benchmark.mjs --full > /out/benchmark.jsonl
     node scripts/benchmark.mjs --full --distribution >> /out/benchmark.jsonl
     node scripts/benchmark-balanced.mjs --full >> /out/benchmark.jsonl
+    node scripts/benchmark-balanced.mjs --full --distribution >> /out/benchmark.jsonl
     exit 0
     ;;
   '') ;;

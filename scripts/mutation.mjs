@@ -58,12 +58,23 @@ if (baseline.status !== 0) {
   console.error(baseline.stdout, baseline.stderr);
   throw new Error('Clean baseline must pass before mutation testing');
 }
-const standaloneBaseline = spawnSync(process.execPath, ['scripts/check-distribution.mjs', '--quick'], {
-  cwd: root, env: { ...process.env, YAMX_SHELL: shell, YAMX_MUTATION: 'baseline' },
-  encoding: 'utf8', timeout: 60000, maxBuffer: 4 * 1024 * 1024,
-});
-if (standaloneBaseline.error || standaloneBaseline.signal || standaloneBaseline.status !== 0)
-  throw new Error(`Standalone baseline must pass: ${standaloneBaseline.stdout}\n${standaloneBaseline.stderr}`);
+function profilesFor(name, file) {
+  if (name.startsWith('B ') || name === 'Lua null preservation') return ['B'];
+  if (file === 'src/minimal.mjs' || name === 'Lua duplicate keys' || name === 'shell value corruption') return ['M'];
+  return ['M', 'B']; // Byte gates, diagnostics, dense lists, I/O and key sorting are shared.
+}
+function standalone(directory, profile, name) {
+  const result = spawnSync(process.execPath, ['scripts/check-distribution.mjs', '--profile', profile, '--quick'], {
+    cwd: directory, env: { ...process.env, YAMX_SHELL: shell, YAMX_MUTATION: name },
+    encoding: 'utf8', timeout: 60000, maxBuffer: 4 * 1024 * 1024,
+  });
+  if (result.error || result.signal) throw result.error || new Error(`${name}: ${result.signal}`);
+  return result;
+}
+for (const profile of ['M', 'B']) {
+  const baseline = standalone(root, profile, 'baseline');
+  if (baseline.status !== 0) throw new Error(`Standalone ${profile} baseline must pass: ${baseline.stdout}\n${baseline.stderr}`);
+}
 let survivors = 0;
 for (const [name, file, before, after] of mutations) {
   const directory = mkdtempSync(join(tmpdir(), 'yamx-mutant-'));
@@ -86,32 +97,31 @@ for (const [name, file, before, after] of mutations) {
       : spawnSync(file.endsWith('.sh') ? shell : process.execPath,
         [file.endsWith('.sh') ? '-n' : '--check', path], { timeout: 5000, encoding: 'utf8' });
     if (syntax.error || syntax.status !== 0) throw new Error(`Invalid mutant ${name}: ${syntax.stderr}`);
-    for (const [artifact, source] of assemble(directory)) writeFileSync(join(directory, 'dist/minimal', artifact), source);
-    if (!name.startsWith('B ') && name !== 'Lua null preservation') {
-      const artifact = join(directory, 'dist/minimal', file.includes('cli.') ? file.split('/').pop()
-        : file.endsWith('.lua') ? 'yamx.lua' : file.endsWith('.sh') ? 'yamx.sh' : 'yamx.mjs');
-      const checked = file.endsWith('.lua')
+    const profiles = profilesFor(name, file);
+    for (const profile of ['M', 'B']) {
+      const folder = profile === 'M' ? 'minimal' : 'balanced';
+      for (const [artifact, source] of assemble(directory, profile)) writeFileSync(join(directory, 'dist', folder, artifact), source);
+      if (!profiles.includes(profile)) continue;
+      const extension = file.endsWith('.lua') ? 'lua' : file.endsWith('.mjs') ? 'mjs' : 'sh';
+      const artifact = join(directory, 'dist', folder, file.includes('cli.') ? `cli.${extension}` : `yamx.${extension}`);
+      const checked = extension === 'lua'
         ? spawnSync('lua5.1', ['-e', `assert(loadfile(${JSON.stringify(artifact)}))`], { timeout: 5000, encoding: 'utf8' })
-        : spawnSync(file.endsWith('.sh') ? shell : process.execPath,
-          [file.endsWith('.sh') ? '-n' : '--check', artifact], { timeout: 5000, encoding: 'utf8' });
+        : spawnSync(extension === 'sh' ? shell : process.execPath,
+          [extension === 'sh' ? '-n' : '--check', artifact], { timeout: 5000, encoding: 'utf8' });
       if (checked.error || checked.signal || checked.status !== 0)
-        throw new Error(`Invalid standalone mutant ${name}: ${checked.stderr}`);
+        throw new Error(`Invalid standalone ${profile} mutant ${name}: ${checked.stderr}`);
     }
     const result = test(directory, name);
     if (result.status === 0) { survivors++; console.error(`SURVIVED: ${name}`); }
     else {
       if (!/ERR_ASSERTION/.test(result.stdout + result.stderr))
         throw new Error(`Mutant ${name} failed without an assertion; investigate infrastructure:\n${result.stdout}\n${result.stderr}`);
-      if (!name.startsWith('B ') && name !== 'Lua null preservation') {
-        const isolated = spawnSync(process.execPath, ['scripts/check-distribution.mjs', '--quick'], {
-          cwd: directory, env: { ...process.env, YAMX_SHELL: shell, YAMX_MUTATION: name }, encoding: 'utf8',
-          timeout: 60000, maxBuffer: 4 * 1024 * 1024,
-        });
-        if (isolated.error || isolated.signal) throw isolated.error || new Error(`${name}: ${isolated.signal}`);
+      for (const profile of profiles) {
+        const isolated = standalone(directory, profile, name);
         if (isolated.status === 0 || !/ERR_ASSERTION/.test(isolated.stdout + isolated.stderr))
-          throw new Error(`Standalone mutant ${name} not detected by an assertion:\n${isolated.stdout}\n${isolated.stderr}`);
+          throw new Error(`Standalone ${profile} mutant ${name} not detected by an assertion:\n${isolated.stdout}\n${isolated.stderr}`);
       }
-      console.log(`DETECTED (including standalone M where applicable): ${name}`);
+      console.log(`DETECTED (standalone ${profiles.join('+')} too): ${name}`);
     }
   } finally { rmSync(directory, { recursive: true, force: true }); }
 }

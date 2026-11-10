@@ -28,7 +28,10 @@ function M.kind(value)
 end
 -- @balanced-end
 local function profile(value)
-  if value == nil or value == 'M' then return 'M' end
+  if value == nil then return 'M' end
+-- @minimal-begin
+  if value == 'M' then return 'M' end
+-- @minimal-end
 -- @balanced-begin
   if value == 'B' then return 'B' end
 -- @balanced-end
@@ -78,6 +81,7 @@ local function dense(value, line)
   if largest ~= count then fail('E_SYNTAX', line, 'sparse list') end
   return count
 end
+-- @minimal-begin
 local function minimal(entries)
   if getmetatable(entries) ~= nil then fail('E_SYNTAX', 1, 'expected an untagged pair list') end
   local count = dense(entries, 1)
@@ -108,6 +112,7 @@ local function parse_minimal(text, transport)
   minimal(entries)
   return entries
 end
+-- @minimal-end
 -- @balanced-begin
 local function trim_right(text)
   local last = #text
@@ -335,49 +340,57 @@ function M.parse(text, selected)
 -- @balanced-begin
   if profile(selected) == 'B' then return tree(yaml_nodes(text)) end
 -- @balanced-end
+-- @minimal-begin
   profile(selected)
   return parse_minimal(text)
+-- @minimal-end
 end
 function M.validate(text, selected)
 -- @balanced-begin
   if profile(selected) == 'B' then check_nodes(yaml_nodes(text)); return end
 -- @balanced-end
+-- @minimal-begin
   profile(selected)
   parse_minimal(text)
+-- @minimal-end
 end
 function M.generate(value, selected)
 -- @balanced-begin
   if profile(selected) == 'B' then return nodes_yaml(tree_nodes(value)) end
 -- @balanced-end
+-- @minimal-begin
   profile(selected)
   minimal(value)
   local out = {}
   for i, entry in ipairs(value) do out[i] = entry[1] .. ": '" .. entry[2] .. "'\n" end
   return table.concat(out)
+-- @minimal-end
 end
 -- Development transports shared by all three CLIs, not general-purpose TSV.
 function M.parse_transport(text, selected)
 -- @balanced-begin
   if profile(selected) == 'B' then return tree(transport_nodes(text)) end
 -- @balanced-end
+-- @minimal-begin
   profile(selected)
   return parse_minimal(text, true)
+-- @minimal-end
 end
 function M.generate_transport(value, selected)
   local out = {}
-  profile(selected)
 -- @balanced-begin
-  if selected == 'B' then
+  if profile(selected) == 'B' then
     for i, n in ipairs(tree_nodes(value)) do
       out[i] = string.format('%d', n.depth) .. '\t' .. n.kind .. '\t' .. n.key .. '\t' .. n.value .. '\n'
     end
-  else
--- @balanced-end
-    minimal(value)
-    for i, entry in ipairs(value) do out[i] = entry[1] .. '\t' .. entry[2] .. '\n' end
--- @balanced-begin
+    return table.concat(out)
   end
 -- @balanced-end
+-- @minimal-begin
+  profile(selected)
+  minimal(value)
+  for i, entry in ipairs(value) do out[i] = entry[1] .. '\t' .. entry[2] .. '\n' end
   return table.concat(out)
+-- @minimal-end
 end
 return M

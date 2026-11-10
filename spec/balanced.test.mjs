@@ -2,9 +2,10 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, openSync, closeSync } from 'node:fs';
 import { parse as yamlParse } from 'yaml';
-import { parse, generate, validate, YamxError } from '../src/yamx.mjs';
-import { nodeText, treeNodes } from '../src/balanced.mjs';
-import { cli, fixture } from './helpers.mjs';
+import { cli, fixture, jsLibrary, distribution, distributionProfile } from './helpers.mjs';
+const { parse, generate, validate, YamxError } = await import(jsLibrary);
+const { nodeText, treeNodes } = await import(distribution ? jsLibrary : new URL('../src/balanced.mjs', import.meta.url));
+const standalone = distribution && distributionProfile === 'B';
 
 const parseB = text => parse(text, 'B');
 const generateB = value => generate(value, 'B');
@@ -69,16 +70,19 @@ test('B scalar boundaries include all printable string bytes, quoting gotchas an
 test('B is a strict superset of M without changing M defaults or string semantics', () => {
   for (let seed = 1; seed <= 12; seed++) {
     const entries = Array.from({ length: seed }, (_, i) => [`key_${i}`, ` ${seed} # : \\ true `]);
-    const minimal = generate(entries);
+    const minimal = standalone ? entries.map(([key, value]) => `${key}: '${value}'\n`).join('') : generate(entries);
     const expected = new Map(entries);
-    assert.deepEqual(parse(minimal), entries);
+    if (!standalone) assert.deepEqual(parse(minimal), entries);
     acceptAll(minimal, expected);
   }
-  assert.throws(() => parse('name: bare\n'), YamxError);
-  for (const impl of ['shell', 'js', 'lua']) {
-    const explicit = fixture(({ write }) => cli(impl, ['--profile', 'M', 'parse', write("name: 'x'\n")]));
-    assert.equal(explicit.status, 0, explicit.stderr);
-    assert.equal(explicit.stdout, 'name\tx\n');
+  if (standalone) assert.deepEqual(parse('name: bare\n'), new Map([['name', 'bare']]));
+  else {
+    assert.throws(() => parse('name: bare\n'), YamxError);
+    for (const impl of ['shell', 'js', 'lua']) {
+      const explicit = fixture(({ write }) => cli(impl, ['--profile', 'M', 'parse', write("name: 'x'\n")]));
+      assert.equal(explicit.status, 0, explicit.stderr);
+      assert.equal(explicit.stdout, 'name\tx\n');
+    }
   }
   assert.throws(() => parse('a: x\n', 'unknown'), TypeError);
   assert.throws(() => validate('a: x\n', 'unknown'), TypeError);

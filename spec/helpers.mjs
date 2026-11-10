@@ -5,6 +5,7 @@ import { join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
 export const root = fileURLToPath(new URL('../', import.meta.url));
+export const distributionProfile = process.env.YAMX_DISTRIBUTION_PROFILE || 'M';
 export const distribution = process.env.YAMX_DISTRIBUTION;
 export const jsLibrary = pathToFileURL(distribution ? join(distribution, 'js-library/yamx.mjs') : join(root, 'src/yamx.mjs'));
 export const cliScript = implementation => distribution

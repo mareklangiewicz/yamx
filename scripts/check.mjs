@@ -33,7 +33,8 @@ try {
     run(`API, bytes, generated cases, CLI: ${shell}`, process.execPath,
       ['--test', 'spec/balanced.test.mjs', 'spec/api.test.mjs', 'spec/cli.test.mjs', 'spec/generated.test.mjs', 'spec/interop.test.mjs'],
       { YAMX_SHELL: shell });
-    run(`Standalone M: ${shell}`, process.execPath, ['scripts/check-distribution.mjs', '--shell', shell]);
+    for (const profile of ['M', 'B'])
+      run(`Standalone ${profile}: ${shell}`, process.execPath, ['scripts/check-distribution.mjs', '--profile', profile, '--shell', shell]);
   }
   for (const lua of ['lua5.1', 'luajit', 'lua5.4']) {
     run(`Lua syntax: ${lua}`, lua, ['-e', "assert(loadfile('src/yamx.lua')); assert(loadfile('src/cli.lua')); assert(loadfile('spec/lua_api.lua'))"]);
@@ -41,10 +42,13 @@ try {
       { YAMX_IMPL: 'lua', YAMX_LUA: lua });
     run(`Lua API and CLI contracts: ${lua}`, process.execPath,
       ['--test', 'spec/lua.test.mjs', 'spec/balanced.test.mjs', 'spec/cli.test.mjs'], { YAMX_LUA: lua });
-    run(`Standalone M: ${lua}`, process.execPath, ['scripts/check-distribution.mjs', '--lua', lua]);
+    for (const profile of ['M', 'B'])
+      run(`Standalone ${profile}: ${lua}`, process.execPath, ['scripts/check-distribution.mjs', '--profile', profile, '--lua', lua]);
   }
-  run('Isolated Minimal distributions', process.execPath, ['scripts/check-distribution.mjs', '--js']);
-  if (env.YAMX_BUSYBOX) run('Standalone M: BusyBox ash', process.execPath, ['scripts/check-distribution.mjs', '--shell', '/bin/ash']);
+  for (const profile of ['M', 'B']) {
+    run(`Standalone ${profile}: JavaScript`, process.execPath, ['scripts/check-distribution.mjs', '--profile', profile, '--js']);
+    if (env.YAMX_BUSYBOX) run(`Standalone ${profile}: BusyBox ash`, process.execPath, ['scripts/check-distribution.mjs', '--profile', profile, '--shell', '/bin/ash']);
+  }
   run('JavaScript shared specification', shellspec, ['--format', 'progress', 'spec'], { YAMX_IMPL: 'js' });
 } finally { rmSync(temporary, { recursive: true, force: true }); }
 console.log(`\nGate: ${failures.length ? 'FAIL' : 'PASS'} in ${((performance.now() - start) / 1000).toFixed(1)}s`);

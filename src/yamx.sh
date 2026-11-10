@@ -107,6 +107,7 @@ if [ "$profile" = B ]; then
   fi
 else
 # @balanced-end
+# @minimal-begin
 if YAMX_KEYS="$workspace/keys" YAMX_ERROR="$workspace/error" awk -v operation="$operation" '
   function reject(code, message) {
     print code " line " NR ": " message > ENVIRON["YAMX_ERROR"]
@@ -146,6 +147,7 @@ else
   io_error "cannot decode or stage input (awk exit $result)"
 fi
 
+# @minimal-end
 # @balanced-begin
 fi
 # @balanced-end
@@ -163,12 +165,14 @@ if [ "$profile" = B ]; then
   ' "$workspace/sorted") || io_error 'cannot check duplicate keys'
 else
 # @balanced-end
+# @minimal-begin
 sort -t "$tab" -k1,1 -k2,2n "$workspace/keys" > "$workspace/sorted" || io_error 'cannot sort keys'
 number=$(awk -F "$tab" '
   NR > 1 && $1 == previous { if (!duplicate || $2 < duplicate) duplicate = $2 }
   { previous = $1 }
   END { if (duplicate) print duplicate }
 ' "$workspace/sorted") || io_error 'cannot check duplicate keys'
+# @minimal-end
 # @balanced-begin
 fi
 # @balanced-end

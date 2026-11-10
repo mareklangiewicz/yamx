@@ -4,12 +4,12 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { root } from './distribute.mjs';
 
-export function isolate(directory = root) {
+export function isolate(directory = root, profile = 'M') {
   const temporary = mkdtempSync(join(tmpdir(), 'yamx-distribution-'));
   for (const [usage, names] of [['shell', ['yamx.sh']], ['js-library', ['yamx.mjs']],
     ['js', ['yamx.mjs', 'cli.mjs']], ['lua-library', ['yamx.lua']], ['lua', ['yamx.lua', 'cli.lua']]]) {
     mkdirSync(join(temporary, usage));
-    for (const name of names) copyFileSync(join(directory, 'dist/minimal', name), join(temporary, usage, name));
+    for (const name of names) copyFileSync(join(directory, 'dist', profile === 'B' ? 'balanced' : 'minimal', name), join(temporary, usage, name));
   }
   return { directory: temporary, close: () => rmSync(temporary, { recursive: true, force: true }) };
 }

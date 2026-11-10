@@ -16,7 +16,7 @@ test('assembly is deterministic and the gate rejects stale distributed code', ()
   };
   try {
     for (const folder of ['src', 'scripts', 'dist']) cpSync(join(root, folder), join(directory, folder), { recursive: true });
-    assert.deepEqual(assemble(directory), assemble(directory));
+    for (const profile of ['M', 'B']) assert.deepEqual(assemble(directory, profile), assemble(directory, profile));
     assert.equal(run('--check').status, 0);
     const path = join(directory, 'src/minimal.mjs');
     writeFileSync(path, readFileSync(path, 'utf8') + '\n// maintained-source edit\n');
@@ -25,7 +25,12 @@ test('assembly is deterministic and the gate rejects stale distributed code', ()
     assert.match(stale.stderr, /Stale distribution/);
     assert.equal(run().status, 0);
     assert.equal(run('--check').status, 0);
-    writeFileSync(join(directory, 'dist/minimal/yamx.lua'), '-- stale\n');
+    const awk = join(directory, 'src/balanced.awk');
+    writeFileSync(awk, readFileSync(awk, 'utf8') + '\n# maintained B source edit\n');
+    assert.notEqual(run('--check').status, 0);
+    assert.equal(run().status, 0);
+    assert.equal(run('--check').status, 0);
+    writeFileSync(join(directory, 'dist/balanced/yamx.lua'), '-- stale\n');
     assert.notEqual(run('--check').status, 0);
   } finally { rmSync(directory, { recursive: true, force: true }); }
 });

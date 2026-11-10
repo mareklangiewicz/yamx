@@ -9,26 +9,30 @@ function replace(source, before, after) {
   if (!source.includes(before)) throw new Error(`Stale assembly anchor: ${before}`);
   return source.replaceAll(before, after);
 }
-function minimal(source) {
-  let balanced = false;
+function select(source, profile) {
+  let section;
   const result = source.split(/(?<=\n)/).filter(line => {
-    if (/^(?:#|--|\/\/) @balanced-begin\n$/.test(line)) {
-      if (balanced) throw new Error('Nested Balanced section');
-      balanced = true; return false;
+    const marker = /^(?:#|--|\/\/) @(minimal|balanced)-(begin|end)\n$/.exec(line);
+    if (marker) {
+      if (marker[2] === 'begin') {
+        if (section) throw new Error('Nested profile section');
+        section = marker[1];
+      } else {
+        if (section !== marker[1]) throw new Error('Unmatched profile section');
+        section = undefined;
+      }
+      return false;
     }
-    if (/^(?:#|--|\/\/) @balanced-end\n$/.test(line)) {
-      if (!balanced) throw new Error('Unmatched Balanced section');
-      balanced = false; return false;
-    }
-    return !balanced;
+    return !section || section === (profile === 'M' ? 'minimal' : 'balanced');
   }).join('');
-  if (balanced) throw new Error('Unclosed Balanced section');
+  if (section) throw new Error('Unclosed profile section');
   return result;
 }
-export function assemble(directory = root) {
+export function assemble(directory = root, profile = 'M') {
+  if (!['M', 'B'].includes(profile)) throw new Error('unknown distribution profile');
   const read = name => readFileSync(join(directory, name), 'utf8');
   const sources = {};
-  for (const name of ['common.mjs', 'minimal.mjs', 'yamx.sh', 'yamx.lua', 'cli.mjs', 'cli.lua'])
+  for (const name of ['common.mjs', 'minimal.mjs', 'yamx.sh', 'yamx.lua', 'cli.mjs', 'cli.lua', ...(profile === 'B' ? ['balanced.mjs', 'balanced.awk'] : [])])
     sources[name] = read(`src/${name}`);
   const revision = createHash('sha256').update(read('scripts/distribute.mjs'));
   for (const [name, source] of Object.entries(sources)) revision.update(`\0${name}\0${source}`);
@@ -39,17 +43,46 @@ export function assemble(directory = root) {
   const common = sources['common.mjs'].replace(/\bfail\b/g, 'textFail');
   let js = replace(sources['minimal.mjs'], "import { checkText, YamxError } from './common.mjs';\n", '');
   js = replace(js, "export { checkText, YamxError } from './common.mjs';\n", '');
-  let sh = minimal(sources['yamx.sh']);
-  sh = replace(sh, 'YAM(M) / YAM(B) CLI', 'Standalone YAM(M) CLI');
-  sh = replace(sh, 'in M|B)', 'in M)');
-  sh = replace(sh, '[--profile M|B]', '[--profile M]');
-  let lua = minimal(sources['yamx.lua']);
-  lua = replace(lua, 'of YAM(M) and YAM(B).', 'of YAM(M).');
-  let jscli = minimal(sources['cli.mjs']);
-  jscli = replace(jscli, "['M', 'B'].includes(profile)", "['M'].includes(profile)");
-  jscli = replace(jscli, '[--profile M|B]', '[--profile M]');
-  let luacli = replace(sources['cli.lua'], "selected ~= 'M' and selected ~= 'B'", "selected ~= 'M'");
-  luacli = replace(luacli, '[--profile M|B]', '[--profile M]');
+  let sh = select(sources['yamx.sh'], profile);
+  sh = replace(sh, 'YAM(M) / YAM(B) CLI', `Standalone YAM(${profile}) CLI`);
+  sh = replace(sh, 'in M|B)', `in ${profile})`);
+  sh = replace(sh, '[--profile M|B]', `[--profile ${profile}]`);
+  let lua = select(sources['yamx.lua'], profile);
+  lua = replace(lua, 'of YAM(M) and YAM(B).', `of YAM(${profile}).`);
+  let jscli = select(sources['cli.mjs'], profile);
+  jscli = replace(jscli, "['M', 'B'].includes(profile)", `['${profile}'].includes(profile)`);
+  jscli = replace(jscli, '[--profile M|B]', `[--profile ${profile}]`);
+  let luacli = replace(sources['cli.lua'], "selected ~= 'M' and selected ~= 'B'", `selected ~= '${profile}'`);
+  luacli = replace(luacli, '[--profile M|B]', `[--profile ${profile}]`);
+  if (profile === 'B') {
+    const balanced = replace(sources['balanced.mjs'], "import { checkText, YamxError } from './common.mjs';\n", '');
+    js = balanced + `
+// Standalone B interface: the library's default is its one selected profile.
+function selectBalanced(profile) {
+  if (profile !== 'B') throw new TypeError('unknown profile');
+}
+export function parse(text, profile = 'B') { selectBalanced(profile); return parseBalanced(text); }
+export function validate(text, profile = 'B') { selectBalanced(profile); validateBalanced(text); }
+export function generate(value, profile = 'B') { selectBalanced(profile); return generateBalanced(value); }
+`;
+    sh = replace(sh, 'profile=M\n', 'profile=B\n');
+    // The selected B branches have no M alternative after section selection.
+    sh = sh.replace(/\nelse\n(?:\n)*fi\n/g, '\nfi\n');
+    const external = `  # Use the bundled awk source beside this entry point, independent of caller cwd.
+  case $0 in */*) source_dir=\${0%/*} ;; *) source_dir=. ;; esac
+  if YAMX_KEYS="$workspace/keys" YAMX_ERROR="$workspace/error" awk -v operation="$operation" \\
+    -f "$source_dir/balanced.awk" < "$file" > "$workspace/output"; then`;
+    sh = replace(sh, external, `  # Embedded POSIX awk parser; no adjacent source file is needed.
+  if YAMX_KEYS="$workspace/keys" YAMX_ERROR="$workspace/error" awk -v operation="$operation" '
+${sources['balanced.awk'].replaceAll("'", "'\\''")}' < "$file" > "$workspace/output"; then`);
+    lua = replace(lua, "if value == nil then return 'M' end", "if value == nil then return 'B' end");
+    jscli = replace(jscli, "let profile = 'M';", "let profile = 'B';");
+    jscli = replace(jscli, "from './balanced.mjs'", "from './yamx.mjs'");
+    // The top-level M import is not part of the B-only CLI interface.
+    jscli = replace(jscli, 'checkText, generate, parse, validate, YamxError', 'YamxError');
+    jscli = replace(jscli, '  } else\n', '  }\n');
+    luacli = replace(luacli, "local selected, offset = 'M', 1", "local selected, offset = 'B', 1");
+  }
   return new Map([
     ['yamx.sh', '#!/bin/sh\n' + header('#') + replace(sh, '#!/bin/sh\n', '')],
     ['yamx.mjs', header('//') + common + '\n' + js],
@@ -58,22 +91,26 @@ export function assemble(directory = root) {
     ['cli.lua', header('--') + luacli],
   ]);
 }
-export function sizes(artifacts = assemble()) {
+export function sizes(artifacts = assemble(), profile = 'M') {
   return [['shell CLI', ['yamx.sh']], ['JS library', ['yamx.mjs']], ['JS CLI', ['yamx.mjs', 'cli.mjs']],
     ['Lua library', ['yamx.lua']], ['Lua CLI', ['yamx.lua', 'cli.lua']]].map(([usage, names]) => ({
-    usage, files: names, bytes: names.reduce((n, name) => n + Buffer.byteLength(artifacts.get(name)), 0),
+    profile, usage, files: names, bytes: names.reduce((n, name) => n + Buffer.byteLength(artifacts.get(name)), 0),
     lines: names.reduce((n, name) => n + artifacts.get(name).split('\n').length - 1, 0),
   }));
 }
 if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
   const mode = process.argv[2];
   if (mode && !['--check', '--sizes'].includes(mode)) throw new Error('usage: node scripts/distribute.mjs [--check|--sizes]');
-  const artifacts = assemble();
-  if (mode === '--sizes') console.log(JSON.stringify(sizes(artifacts), null, 2));
-  else for (const [name, source] of artifacts) {
-    const path = join(root, 'dist/minimal', name);
-    if (mode === '--check') {
-      if (readFileSync(path, 'utf8') !== source) throw new Error(`Stale distribution: ${name}; run node scripts/distribute.mjs`);
-    } else { mkdirSync(dirname(path), { recursive: true }); writeFileSync(path, source); }
+  const measurements = [];
+  for (const [profile, folder] of [['M', 'minimal'], ['B', 'balanced']]) {
+    const artifacts = assemble(root, profile);
+    if (mode === '--sizes') measurements.push(...sizes(artifacts, profile));
+    else for (const [name, source] of artifacts) {
+      const path = join(root, 'dist', folder, name);
+      if (mode === '--check') {
+        if (readFileSync(path, 'utf8') !== source) throw new Error(`Stale distribution: ${folder}/${name}; run node scripts/distribute.mjs`);
+      } else { mkdirSync(dirname(path), { recursive: true }); writeFileSync(path, source); }
+    }
   }
+  if (mode === '--sizes') console.log(JSON.stringify(measurements, null, 2));
 }

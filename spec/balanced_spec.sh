@@ -3,11 +3,11 @@ Describe 'YAM(B) — Balanced'
     input="$SHELLSPEC_TMPBASE/balanced-input"
     cat > "$input"
     if [ "${YAMX_IMPL:-shell}" = js ]; then
-      node src/cli.mjs --profile B "$1" "$input"
+      node "${YAMX_JS_CLI:-src/cli.mjs}" --profile B "$1" "$input"
     elif [ "${YAMX_IMPL:-shell}" = lua ]; then
-      "${YAMX_LUA:-lua5.1}" src/cli.lua --profile B "$1" "$input"
+      "${YAMX_LUA:-lua5.1}" "${YAMX_LUA_CLI:-src/cli.lua}" --profile B "$1" "$input"
     else
-      "${YAMX_SHELL:-sh}" src/yamx.sh --profile B "$1" "$input"
+      "${YAMX_SHELL:-sh}" "${YAMX_SHELL_CLI:-src/yamx.sh}" --profile B "$1" "$input"
     fi
   }
 
