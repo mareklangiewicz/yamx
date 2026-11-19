@@ -52,11 +52,15 @@ round trips, not asserted to be an ordered YAML mapping type.
 sh src/yamx.sh validate FILE
 sh src/yamx.sh parse FILE
 sh src/yamx.sh generate FILE
+sh src/yamx.sh json FILE
 
 node src/cli.mjs validate FILE
 node src/cli.mjs parse FILE
 node src/cli.mjs generate FILE
+node src/cli.mjs json FILE
 ```
+
+`lua src/cli.lua` accepts the same operations.
 
 Input is a stable readable regular file. Do not mutate it during processing:
 the shell CLI inspects bytes with `od` before reading lines. Standard input and
@@ -67,6 +71,7 @@ concurrent file modification handling are not implemented.
 | validate | YAM(M) document | Nothing |
 | parse | YAM(M) document | One `key TAB value LF` record per entry |
 | generate | Restricted TSV records | Canonical YAM(M) document |
+| json | YAM(M) document | JSON object, see below |
 
 The TSV transport has exactly one TAB separator per record and at least one
 record. Keys and values must be representable in YAM(M); an empty value is
@@ -74,7 +79,26 @@ allowed, an empty key is not. Final LF is mandatory. There is no TSV quoting
 or escaping. Newline-containing values are outside this transport's domain;
 they must never be encoded as extra records by a caller.
 
-Both CLIs stage output until validation succeeds, so invalid input produces no
+### JSON export
+
+`json` is one-way interoperability output; there is no JSON input or reverse
+conversion. An M document exports as one JSON object with entries in source
+order, two-space indentation and exactly one final LF. Every value stays a JSON
+string: `count: '123'` exports `"count": "123"`, never a number. Keys such as
+`__proto__` and `constructor` are ordinary properties. Keys and values are
+printable ASCII, so only `"` and `\` are escaped. The grammar and diagnostics
+are exactly those of `parse`; nothing is repaired. The JS library exposes
+`toJSON(text, profile = 'M')` and Lua `to_json(text, profile)`, both returning
+the same text.
+
+```json
+{
+  "name": "neovim",
+  "count": "123"
+}
+```
+
+All CLIs stage output until validation succeeds, so invalid input produces no
 partial stdout. The shell CLI uses private temporary files, bounded byte/line
 passes, and sorted key records for duplicate detection. It avoids growing-prefix
 string operations, including native shell suffix scans that regress on long

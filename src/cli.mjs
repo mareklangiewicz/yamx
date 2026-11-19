@@ -1,5 +1,5 @@
 import { readFileSync, statSync, writeSync } from 'node:fs';
-import { checkText, generate, parse, validate, YamxError } from './yamx.mjs';
+import { checkText, generate, parse, toJSON, validate, YamxError } from './yamx.mjs';
 // @balanced-begin
 import { yamlNodes, nodeText, transportNodes, nodesYaml, validateBalanced } from './balanced.mjs';
 // @balanced-end
@@ -8,8 +8,8 @@ const args = process.argv.slice(2);
 let profile = 'M';
 if (args[0] === '--profile') { args.shift(); profile = args.shift(); }
 const [operation, file, ...extra] = args;
-if (!['M', 'B'].includes(profile) || !file || extra.length || !['validate', 'parse', 'generate'].includes(operation)) {
-  console.error('usage: node src/cli.mjs [--profile M|B] validate|parse|generate FILE');
+if (!['M', 'B'].includes(profile) || !file || extra.length || !['validate', 'parse', 'generate', 'json'].includes(operation)) {
+  console.error('usage: node src/cli.mjs [--profile M|B] validate|parse|generate|json FILE');
   process.exit(2);
 }
 
@@ -18,6 +18,8 @@ try {
   // latin1 preserves every input byte for the ASCII gate, including invalid UTF-8.
   const text = readFileSync(file).toString('latin1');
   let result = '';
+  if (operation === 'json') result = toJSON(text, profile);
+  else
 // @balanced-begin
   if (profile === 'B') {
     if (operation === 'generate') result = nodesYaml(transportNodes(text));

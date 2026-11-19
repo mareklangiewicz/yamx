@@ -66,3 +66,22 @@ test('standalone B guards keep physical diagnostics, map scopes and atomic outpu
     }
   });
 });
+
+test('standalone B defaults export typed JSON from the library and every CLI', { skip: !enabled }, async () => {
+  const y = await import(jsLibrary);
+  const document = "text: 'say \"hi\" C:\\'\nnested:\n  - '-'\n  -\n    n: -0\nlast: true\n";
+  const json = '{\n  "text": "say \\"hi\\" C:\\\\",\n  "nested": [\n    "-",\n    {\n      "n": 0\n    }\n  ],\n  "last": true\n}\n';
+  assert.equal(y.toJSON("text: 'x'\n"), '{\n  "text": "x"\n}\n');
+  assert.throws(() => y.toJSON("text: 'x'\n", 'M'), TypeError);
+  fixture(({ write }) => {
+    for (const impl of ['shell', 'js', 'lua']) {
+      const result = cli(impl, ['json', write(document)]);
+      assert.equal(result.status, 0, `${impl}: ${result.stderr}`);
+      assert.equal(result.stdout, json, impl);
+      const rejected = cli(impl, ['json', write("a: 1\nb: '\\'\nb: 2\n")]);
+      assert.equal(rejected.status, 1);
+      assert.equal(rejected.stdout, '');
+      assert.match(rejected.stderr, /^E_DUPLICATE line 3:/);
+    }
+  });
+});

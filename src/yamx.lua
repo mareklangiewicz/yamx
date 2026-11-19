@@ -81,6 +81,35 @@ local function dense(value, line)
   if largest ~= count then fail('E_SYNTAX', line, 'sparse list') end
   return count
 end
+-- JSON export from checked preorder nodes. Keys are identifiers and strings are
+-- printable ASCII, so only quotes and backslashes need escaping. Each node emits
+-- one line; bounded depth keeps the ancestor closings cheap.
+local function json_string(text) return '"' .. text:gsub('[\\"]', '\\%0') .. '"' end
+local function json_nodes(nodes)
+  local out, open = {}, {}
+  for i, n in ipairs(nodes) do
+    local after = nodes[i + 1]
+    local next_depth = after and after.depth or 0
+    local children = (n.kind == 'map' or n.kind == 'seq') and next_depth > n.depth
+    local value = n.value
+    if n.kind == 'map' then value = children and '{' or '{}'
+    elseif n.kind == 'seq' then value = children and '[' or '[]'
+    elseif n.kind == 'str' then value = json_string(value)
+    elseif n.kind == 'null' then value = 'null' end
+    local line = string.rep('  ', n.depth) .. (n.key ~= '' and json_string(n.key) .. ': ' or '') .. value
+    if children then
+      open[n.depth] = n.kind
+      out[#out + 1] = line
+    else
+      for d = n.depth - 1, next_depth, -1 do
+        out[#out + 1] = line
+        line = string.rep('  ', d) .. (open[d] == 'map' and '}' or ']')
+      end
+      out[#out + 1] = after and line .. ',' or line
+    end
+  end
+  return table.concat(out, '\n') .. '\n'
+end
 -- @minimal-begin
 local function minimal(entries)
   if getmetatable(entries) ~= nil then fail('E_SYNTAX', 1, 'expected an untagged pair list') end
@@ -364,6 +393,24 @@ function M.generate(value, selected)
   local out = {}
   for i, entry in ipairs(value) do out[i] = entry[1] .. ": '" .. entry[2] .. "'\n" end
   return table.concat(out)
+-- @minimal-end
+end
+-- One-way JSON export: M values stay strings; B keeps its decoded types.
+function M.to_json(text, selected)
+-- @balanced-begin
+  if profile(selected) == 'B' then
+    local nodes = yaml_nodes(text)
+    check_nodes(nodes)
+    return json_nodes(nodes)
+  end
+-- @balanced-end
+-- @minimal-begin
+  profile(selected)
+  local nodes = { { depth = 0, kind = 'map', key = '', value = '' } }
+  for i, entry in ipairs(parse_minimal(text)) do
+    nodes[i + 1] = { depth = 1, kind = 'str', key = entry[1], value = entry[2] }
+  end
+  return json_nodes(nodes)
 -- @minimal-end
 end
 -- Development transports shared by all three CLIs, not general-purpose TSV.

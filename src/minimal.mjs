@@ -1,5 +1,5 @@
 // YAM(M) pair-list interface; no other profile implementation is loaded.
-import { checkText, YamxError } from './common.mjs';
+import { checkText, nodesJSON, YamxError } from './common.mjs';
 export { checkText, YamxError } from './common.mjs';
 
 const fail = (code, line, message) => { throw new YamxError(code, line, message); };
@@ -45,4 +45,11 @@ export function generate(entries, profile = 'M') {
     checkEntry(key, value, index + 1, seen);
     return `${key}: '${value}'\n`;
   }).join('');
+}
+
+// One-way JSON export: an object in source entry order, every value a string.
+export function toJSON(text, profile = 'M') {
+  const entries = parse(text, profile);
+  return nodesJSON([{ depth: 0, kind: 'map', key: '', value: '' },
+    ...entries.map(([key, value]) => ({ depth: 1, kind: 'str', key, value }))]);
 }

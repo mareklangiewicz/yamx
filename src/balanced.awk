@@ -39,6 +39,40 @@ function writeyaml(nextdepth,    prefix, i, scalar, empty, quoted) {
   else scalar = savedvalue
   print prefix (saveddepth ? " " : "") scalar
 }
+# Write a JSON string piecewise: literal one-character split separators avoid
+# gsub replacement-escape differences between awks, and printing each piece
+# avoids rebuilding a growing string, so long runs of \ or " stay linear.
+function putstring(text,    parts, count, i, quotes, pieces, j) {
+  printf "\""
+  count = split(text, parts, "\\")
+  for (i = 1; i <= count; i++) {
+    if (i > 1) printf "\\\\"
+    pieces = split(parts[i], quotes, "\"")
+    for (j = 1; j <= pieces; j++) printf "%s%s", (j > 1 ? "\\\"" : ""), quotes[j]
+  }
+  printf "\""
+}
+function padding(depth,    i, out) {
+  out = ""
+  for (i = 0; i < depth; i++) out = out "  "
+  return out
+}
+# Emit the saved preorder node once the next depth is known (-1 at the end):
+# it decides whether a collection opens and which ancestors close before it.
+function writejson(nextdepth,    open, d, last) {
+  if (!saved) return
+  open = (savedkind == "map" || savedkind == "seq") && nextdepth > saveddepth
+  printf "%s", padding(saveddepth) (savedkey != "" ? "\"" savedkey "\": " : "")
+  if (savedkind == "map") printf "%s", open ? "{" : "{}"
+  else if (savedkind == "seq") printf "%s", open ? "[" : "[]"
+  else if (savedkind == "str") putstring(savedvalue)
+  else if (savedkind == "null") printf "null"
+  else printf "%s", savedvalue
+  if (open) { jsonkinds[saveddepth] = savedkind; print ""; return }
+  last = nextdepth < 0 ? 0 : nextdepth
+  for (d = saveddepth - 1; d >= last; d--) printf "\n%s", padding(d) (jsonkinds[d] == "map" ? "}" : "]")
+  print (nextdepth > 0 ? "," : "")
+}
 function node(depth, kind, key, value, source,    parent) {
   if (depth > 32) reject("E_DEPTH", "maximum depth is 32", source)
   if (kind != "map" && kind != "seq" && kind != "str" && kind != "int" && kind != "bool" && kind != "null")
@@ -64,8 +98,9 @@ function node(depth, kind, key, value, source,    parent) {
   ids[depth] = count
   lastdepth = depth
   if (operation == "parse") printf "%d\t%s\t%s\t%s\n", depth, kind, key, value
-  if (operation == "generate") {
-    writeyaml(depth)
+  if (operation == "generate" || operation == "json") {
+    if (operation == "json") writejson(depth)
+    else writeyaml(depth)
     saved = 1
     saveddepth = depth
     savedkind = kind
@@ -168,5 +203,6 @@ END {
     if (pending) reject("E_SYNTAX", "missing child collection", pendingline)
     if (!count) reject("E_EMPTY", "expected a collection", 1)
     if (operation == "generate") writeyaml(-1)
+    if (operation == "json") writejson(-1)
   }
 }

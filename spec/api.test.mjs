@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { jsLibrary } from './helpers.mjs';
-const { generate, parse, validate, YamxError } = await import(jsLibrary);
+const { generate, parse, toJSON, validate, YamxError } = await import(jsLibrary);
 
 test('every supported string byte survives generation and parsing', () => {
   for (let code = 32; code <= 126; code++) {
@@ -46,4 +46,24 @@ test('API errors expose stable codes and one-based line numbers', () => {
     error instanceof YamxError && error.code === 'E_DUPLICATE' && error.line === 2);
   assert.throws(() => parse("first: 'x'\nsecond: '\0'\n"), error =>
     error instanceof YamxError && error.code === 'E_CHARACTER' && error.line === 2);
+});
+
+test('toJSON exports readable JSON whose values all stay strings', () => {
+  const text = "count: '123'\n__proto__: 'say \"hi\" C:\\'\nconstructor: ''\n";
+  const json = toJSON(text);
+  assert.equal(json, '{\n  "count": "123",\n  "__proto__": "say \\"hi\\" C:\\\\",\n  "constructor": ""\n}\n');
+  const decoded = JSON.parse(json);
+  assert.ok(Object.hasOwn(decoded, '__proto__'));
+  assert.equal(decoded.__proto__, 'say "hi" C:\\');
+  assert.deepEqual(Object.keys(decoded), ['count', '__proto__', 'constructor']);
+  assert.equal(toJSON(text, 'M'), json);
+});
+
+test('toJSON keeps parser errors and argument errors', () => {
+  assert.throws(() => toJSON("a: 'x'\nb: bare\n"), error =>
+    error instanceof YamxError && error.code === 'E_SYNTAX' && error.line === 2);
+  assert.throws(() => toJSON("a: 'x'"), error => error instanceof YamxError && error.code === 'E_NEWLINE');
+  assert.throws(() => toJSON("a: 'x'\r\n"), error => error instanceof YamxError && error.code === 'E_CHARACTER');
+  assert.throws(() => toJSON(1), TypeError);
+  assert.throws(() => toJSON("a: 'x'\n", 'X'), TypeError);
 });

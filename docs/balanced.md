@@ -131,6 +131,19 @@ This transport needs no escaping because tabs and newlines cannot occur in
 keys or scalar data. It is data, never shell source. It is a development
 interface, separate from M's flat TSV.
 
+## JSON export
+
+`json` (CLI), `toJSON(text, 'B')` (JS) and `to_json(text, 'B')` (Lua) apply the
+full B grammar, then export the decoded tree with M's formatting: two-space
+indentation, one final LF, no partial output on invalid input. Mappings become
+objects in source order, sequences arrays, including empty `{}` and `[]`.
+Strings, safe integers, booleans and null keep their types; `-0` exports as
+`0`, and quoted `'123'` remains a string. Implementations emit preorder nodes
+directly rather than calling a general JSON serializer: this keeps keys like
+`__proto__` ordinary and needs no JSON library in shell or Lua. The shell
+writer prints split string pieces instead of concatenating them, so long runs
+of quotes or backslashes stay linear.
+
 ## Implementation costs
 
 The shell parser uses byte inspection, a bounded-depth layout stack in POSIX

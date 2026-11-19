@@ -36,5 +36,11 @@ for _, fn in ipairs({y.parse, y.validate, y.generate, y.parse_transport, y.gener
   assert(not pcall(fn, {}, 'B'))
   assert(not pcall(fn, {}, 'X'))
 end
+local m_text = "count: '123'\n__proto__: 'say \"hi\" C:\\'\nconstructor: ''\n"
+assert(y.to_json(m_text) == '{\n  "count": "123",\n  "__proto__": "say \\"hi\\" C:\\\\",\n  "constructor": ""\n}\n')
+rejects('E_DUPLICATE', 2, function() y.to_json("a: 'x'\na: 'y'\n") end)
+rejects('E_NEWLINE', 1, function() y.to_json("a: 'x'") end)
+assert(not pcall(y.to_json, {}))
+assert(not pcall(y.to_json, "a: 'x'\n", 'B'))
 assert(y.map == nil and y.seq == nil and y.null == nil)
 print('Standalone Lua Minimal contracts passed')

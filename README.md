@@ -81,8 +81,15 @@ node src/cli.mjs --profile B generate nodes.tsv
 
 See [B's node transport](docs/balanced.md#node-transport) for the record contract.
 
+`json` exports a document as readable JSON, one-way, keeping decoded types:
+M values stay strings, B keeps integers, booleans and null:
+
+```sh
+sh src/yamx.sh --profile B json examples/balanced.yaml
+```
+
 ```js
-import { parse, generate, validate } from './src/yamx.mjs';
+import { parse, generate, toJSON, validate } from './src/yamx.mjs';
 
 const text = "name: 'yamx'\n";
 validate(text);                    // returns undefined, or throws YamxError
@@ -91,6 +98,7 @@ generate([['name', 'yamx']]);       // "name: 'yamx'\n"
 
 const tree = parse('items:\n  - shell\n  - portable\n', 'B'); // Map + array
 generate(tree, 'B');
+toJSON('count: 3\n', 'B');        // '{\n  "count": 3\n}\n'
 ```
 
 ## Executable specification

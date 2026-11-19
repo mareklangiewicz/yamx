@@ -1,4 +1,4 @@
-import { checkText, YamxError } from './common.mjs';
+import { checkText, nodesJSON, YamxError } from './common.mjs';
 
 const fail = (code, line, message) => { throw new YamxError(code, line, message); };
 const keyPattern = /^[a-z_][a-z0-9_-]*$/;
@@ -159,6 +159,11 @@ function tree(nodes) {
 }
 export function parseBalanced(text) { return tree(yamlNodes(text)); }
 export function validateBalanced(text) { checkNodes(yamlNodes(text)); }
+export function jsonBalanced(text) {
+  const nodes = yamlNodes(text);
+  checkNodes(nodes);
+  return nodesJSON(nodes);
+}
 
 export function treeNodes(root) {
   const nodes = [];

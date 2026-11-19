@@ -144,4 +144,84 @@ Describe 'YAM(B) — Balanced'
       The stderr should start with 'E_DUPLICATE line 3:'
     End
   End
+
+  Describe 'one-way JSON export'
+    It 'keeps nesting, decoded types and empty collections, normalizing negative zero'
+      Data
+        #|name: 'Marek''s "tools"' # comment
+        #|count: 123
+        #|quoted: '123'
+        #|zero: -0
+        #|active: false
+        #|missing: null
+        #|items:
+        #|  - shell
+        #|  -
+        #|    path: 'C:\x'
+        #|    tags: []
+        #|  - {}
+      End
+      When call run_balanced json
+      The status should be success
+      The output should eq "$(printf '%s\n' '{' \
+        '  "name": "Marek'"'"'s \"tools\"",' \
+        '  "count": 123,' \
+        '  "quoted": "123",' \
+        '  "zero": 0,' \
+        '  "active": false,' \
+        '  "missing": null,' \
+        '  "items": [' \
+        '    "shell",' \
+        '    {' \
+        '      "path": "C:\\x",' \
+        '      "tags": []' \
+        '    },' \
+        '    {}' \
+        '  ]' \
+        '}')"
+      The stderr should be blank
+    End
+
+    It 'closes several nested collections before a shallower sibling'
+      Data
+        #|-
+        #|  -
+        #|    a:
+        #|      b: 1
+        #|- last
+      End
+      When call run_balanced json
+      The status should be success
+      The output should eq "$(printf '%s\n' '[' '  [' '    {' '      "a": {' '        "b": 1' '      }' '    }' '  ],' '  "last"' ']')"
+      The stderr should be blank
+    End
+
+    Context 'empty roots'
+      Parameters
+        '{}'
+        '[]'
+      End
+      It "exports <$1>"
+        Data "$1"
+        When call run_balanced json
+        The status should be success
+        The output should eq "$1"
+        The stderr should be blank
+      End
+    End
+
+    It 'rejects a late nested duplicate without publishing partial JSON'
+      Data
+        #|items:
+        #|  - 1
+        #|outer:
+        #|  key: 1
+        #|  key: 2
+      End
+      When call run_balanced json
+      The status should eq 1
+      The output should be blank
+      The stderr should start with 'E_DUPLICATE line 5:'
+    End
+  End
 End

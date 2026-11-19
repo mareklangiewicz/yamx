@@ -24,21 +24,21 @@ Minimal files under `dist/minimal/`:
 
 | Usage | Required files | Bytes | Lines | Runtime dependencies |
 | --- | --- | ---: | ---: | --- |
-| Shell CLI | `yamx.sh` | 5,200 | 151 | POSIX shell; `od`, `awk`, `sort`, `cat`, `mkdir`, `rm`; private temporary storage |
-| JavaScript library | `yamx.mjs` | 3,038 | 73 | Native ES modules and language builtins |
-| JavaScript CLI | `yamx.mjs`, `cli.mjs` | 4,933 | 115 | Node 24+; Node builtins |
-| Lua library | `yamx.lua` | 4,115 | 109 | Lua 5.1/LuaJIT or newer; builtins only |
-| Lua CLI | `yamx.lua`, `cli.lua` | 6,127 | 147 | Lua plus POSIX sh/test for regular-file checks |
+| Shell CLI | `yamx.sh` | 5,984 | 170 | POSIX shell; `od`, `awk`, `sort`, `cat`, `mkdir`, `rm`; private temporary storage |
+| JavaScript library | `yamx.mjs` | 4,565 | 105 | Native ES modules and language builtins |
+| JavaScript CLI | `yamx.mjs`, `cli.mjs` | 6,548 | 149 | Node 24+; Node builtins |
+| Lua library | `yamx.lua` | 5,768 | 147 | Lua 5.1/LuaJIT or newer; builtins only |
+| Lua CLI | `yamx.lua`, `cli.lua` | 7,881 | 186 | Lua plus POSIX sh/test for regular-file checks |
 
 Balanced files under `dist/balanced/`:
 
 | Usage | Required files | Bytes | Lines | Runtime dependencies |
 | --- | --- | ---: | ---: | --- |
-| Shell CLI | `yamx.sh` | 10,862 | 300 | POSIX shell; `od`, `awk`, `sort`, `cat`, `mkdir`, `rm`; private temporary storage |
-| JavaScript library | `yamx.mjs` | 10,530 | 240 | Native ES modules and language builtins |
-| JavaScript CLI | `yamx.mjs`, `cli.mjs` | 12,194 | 274 | Node 24+; Node builtins |
-| Lua library | `yamx.lua` | 13,650 | 321 | Lua 5.1/LuaJIT or newer; builtins only |
-| Lua CLI | `yamx.lua`, `cli.lua` | 15,662 | 359 | Lua plus POSIX sh/test for regular-file checks |
+| Shell CLI | `yamx.sh` | 12,528 | 336 | POSIX shell; `od`, `awk`, `sort`, `cat`, `mkdir`, `rm`; private temporary storage |
+| JavaScript library | `yamx.mjs` | 11,961 | 271 | Native ES modules and language builtins |
+| JavaScript CLI | `yamx.mjs`, `cli.mjs` | 13,713 | 307 | Node 24+; Node builtins |
+| Lua library | `yamx.lua` | 15,178 | 358 | Lua 5.1/LuaJIT or newer; builtins only |
+| Lua CLI | `yamx.lua`, `cli.lua` | 17,291 | 397 | Lua plus POSIX sh/test for regular-file checks |
 
 The B shell file embeds its POSIX awk parser; no adjacent `balanced.awk` is
 required. Both profiles retain the same runtime utility dependencies.
@@ -49,10 +49,10 @@ Source size is an inspection aid, not correctness or complexity evidence.
 ## Interfaces
 
 The [M grammar and transport contract](minimal.md) applies unchanged. The M CLIs
-accept `validate|parse|generate FILE`, optionally preceded by `--profile M`;
+accept `validate|parse|generate|json FILE`, optionally preceded by `--profile M`;
 B selection is a usage error. JS exports `parse`, `validate`, `generate`,
-`checkText` and `YamxError`. Lua exports `parse`, `validate`, `generate`,
-`parse_transport`, `generate_transport` and `is_error`, with the untagged ordered
+`toJSON`, `checkText` and `YamxError`. Lua exports `parse`, `validate`, `generate`,
+`to_json`, `parse_transport`, `generate_transport` and `is_error`, with the untagged ordered
 pair lists described in [the Lua interface](lua.md). Library profile arguments
 may be omitted or `'M'`; other values are rejected.
 

@@ -32,12 +32,21 @@ for (const implementation of ['shell', 'js', 'lua']) {
       ['parse', "good: 'x'\nbad: '\0'\n"],
       ['generate', "good\tx\nbad\tcan't\n"],
       ['generate', 'good\tx\nbad\t\0\n'],
+      ['json', "good: 'x'\nbad: bare\n"],
+      ['json', "good: 'x'\nbad: '\0'\n"],
     ]) {
       const result = cli(implementation, [operation, write(input)]);
       assert.equal(result.status, 1);
       assert.equal(result.stdout, '');
       assert.match(result.stderr, /line 2:/);
     }
+  }));
+
+  test(`${implementation}: json writes two-space JSON with exactly one final LF`, () => fixture(({ write }) => {
+    const result = cli(implementation, ['json', write("b: '1'\na: ''\nq: 'say \"hi\" C:\\'\n")]);
+    assert.equal(result.status, 0, result.stderr);
+    assert.equal(result.stdout, '{\n  "b": "1",\n  "a": "",\n  "q": "say \\"hi\\" C:\\\\"\n}\n');
+    assert.equal(result.stderr, '');
   }));
 
   test(`${implementation}: parsing is independent of caller cwd, locale, and IFS`, () => fixture(({ directory, write }) => {

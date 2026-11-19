@@ -35,6 +35,10 @@ const mutations = [
   ['B JS scalar types', 'src/balanced.mjs', "return ['bool', value]", "return ['str', value]"],
   ['B JS apostrophe encoding', 'src/balanced.mjs', `value.replaceAll("'", "''")`, 'value'],
   ['JS wrong error line', 'src/common.mjs', 'this.line = line;', 'this.line = line + 1;'],
+  ['JS JSON backslash escaping', 'src/common.mjs', String.raw`text.replace(/["\\]/g,`, 'text.replace(/["]/g,'],
+  ['shell JSON backslash escaping', 'src/yamx.sh', String.raw`      if (i > 1) printf "\\\\"`, String.raw`      if (i > 1) printf "\\"`],
+  ['B shell JSON closings', 'src/balanced.awk', 'for (d = saveddepth - 1; d >= last; d--)', 'for (d = saveddepth - 1; d > last; d--)'],
+  ['Lua JSON separators', 'src/yamx.lua', "out[#out + 1] = after and line .. ',' or line", 'out[#out + 1] = line'],
 ];
 
 function test(directory, label) {
@@ -60,7 +64,7 @@ if (baseline.status !== 0) {
 }
 function profilesFor(name, file) {
   if (name.startsWith('B ') || name === 'Lua null preservation') return ['B'];
-  if (file === 'src/minimal.mjs' || name === 'Lua duplicate keys' || name === 'shell value corruption') return ['M'];
+  if (file === 'src/minimal.mjs' || name === 'Lua duplicate keys' || name === 'shell value corruption' || name === 'shell JSON backslash escaping') return ['M'];
   return ['M', 'B']; // Byte gates, diagnostics, dense lists, I/O and key sorting are shared.
 }
 function standalone(directory, profile, name) {

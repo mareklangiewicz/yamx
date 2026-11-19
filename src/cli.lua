@@ -5,8 +5,8 @@ local selected, offset = 'M', 1
 if arg[1] == '--profile' then selected, offset = arg[2], 3 end
 local operation, file = arg[offset], arg[offset + 1]
 if (selected ~= 'M' and selected ~= 'B') or not file or arg[offset + 2]
-    or (operation ~= 'validate' and operation ~= 'parse' and operation ~= 'generate') then
-  io.stderr:write('usage: lua src/cli.lua [--profile M|B] validate|parse|generate FILE\n')
+    or (operation ~= 'validate' and operation ~= 'parse' and operation ~= 'generate' and operation ~= 'json') then
+  io.stderr:write('usage: lua src/cli.lua [--profile M|B] validate|parse|generate|json FILE\n')
   os.exit(2)
 end
 local function io_error() error('E_IO: unable to read input or write output', 0) end
@@ -23,6 +23,7 @@ local ok, result = pcall(function()
   if not text or not closed then io_error() end
   local output = ''
   if operation == 'validate' then yamx.validate(text, selected)
+  elseif operation == 'json' then output = yamx.to_json(text, selected)
   elseif operation == 'parse' then output = yamx.generate_transport(yamx.parse(text, selected), selected)
   else output = yamx.generate(yamx.parse_transport(text, selected), selected) end
   -- Buffer all validated data; flush explicitly so /dev/full and broken output

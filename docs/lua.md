@@ -14,6 +14,7 @@ local entries = yamx.parse("name: 'yamx'\n")
 assert(entries[1][1] == 'name' and entries[1][2] == 'yamx')
 local text = yamx.generate(entries)
 yamx.validate(text) -- returns nil on success
+assert(yamx.to_json(text) == '{\n  "name": "yamx"\n}\n')
 ```
 
 `parse(text, profile)`, `validate(text, profile)`, and `generate(value, profile)`
@@ -75,6 +76,7 @@ API generation numbers M entries or B preorder nodes, including the root.
 lua5.1 src/cli.lua validate examples/minimal.yaml
 luajit src/cli.lua --profile B parse examples/balanced.yaml > nodes.tsv
 lua5.4 src/cli.lua --profile B generate nodes.tsv
+lua5.4 src/cli.lua --profile B json examples/balanced.yaml
 ```
 
 The CLI matches shell/JavaScript operations and exit codes: 0 success, 1 invalid
@@ -88,7 +90,9 @@ It buffers validated output and checks write/flush errors.
 or B typed preorder records into API values. `generate_transport(value, profile)`
 emits those records. These are development transports shared by the three CLIs,
 not a general TSV format. See [Minimal](minimal.md) and [Balanced](balanced.md).
-JSON export remains a separately agreed, pending feature across implementations.
+`to_json(text, profile)` returns the same one-way JSON text as the other
+implementations' `json` operation; see [Minimal](minimal.md#json-export) and
+[Balanced](balanced.md#json-export). It needs no JSON library.
 
 ## Focused checks
 

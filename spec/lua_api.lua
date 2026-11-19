@@ -106,4 +106,17 @@ if standalone then
     assert(not pcall(fn, {}, 'M'))
   end
 end
+-- One-way JSON export: decoded types, empty collections and nested closings.
+local b_text = "__proto__:\n  constructor: 'a\"b\\c'\n  count: 9007199254740991\n  list:\n    - -0\n    - []\n    - {}\nlast: null\n"
+assert(y.to_json(b_text, 'B') == '{\n  "__proto__": {\n    "constructor": "a\\"b\\\\c",\n    "count": 9007199254740991,\n'
+  .. '    "list": [\n      0,\n      [],\n      {}\n    ]\n  },\n  "last": null\n}\n')
+assert(y.to_json('[]\n', 'B') == '[]\n' and y.to_json('{}\n', 'B') == '{}\n')
+rejects('E_DUPLICATE', 3, function() y.to_json('a:\n  b: 1\n  b: 2\n', 'B') end)
+if not standalone then
+local m_text = "count: '123'\n__proto__: 'say \"hi\" C:\\'\nconstructor: ''\n"
+  assert(y.to_json(m_text) == '{\n  "count": "123",\n  "__proto__": "say \\"hi\\" C:\\\\",\n  "constructor": ""\n}\n')
+  rejects('E_DUPLICATE', 2, function() y.to_json("a: 'x'\na: 'y'\n") end)
+  rejects('E_NEWLINE', 1, function() y.to_json("a: 'x'") end)
+  assert(not pcall(y.to_json, {}))
+end
 print('Lua API contracts passed')

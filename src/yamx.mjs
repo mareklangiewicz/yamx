@@ -1,6 +1,6 @@
 // Combined profile-selecting interface. M remains the default.
 import * as minimal from './minimal.mjs';
-import { parseBalanced, validateBalanced, generateBalanced } from './balanced.mjs';
+import { parseBalanced, validateBalanced, generateBalanced, jsonBalanced } from './balanced.mjs';
 export { checkText, YamxError } from './common.mjs';
 
 export function parse(text, profile = 'M') {
@@ -11,4 +11,7 @@ export function validate(text, profile = 'M') {
 }
 export function generate(value, profile = 'M') {
   return profile === 'B' ? generateBalanced(value) : minimal.generate(value, profile);
+}
+export function toJSON(text, profile = 'M') {
+  return profile === 'B' ? jsonBalanced(text) : minimal.toJSON(text, profile);
 }

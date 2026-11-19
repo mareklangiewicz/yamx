@@ -21,3 +21,28 @@ export function checkText(text, allowTab = false) {
   }
   if (!text.endsWith('\n')) fail('E_NEWLINE', line, 'expected a final LF');
 }
+
+// JSON export from checked preorder nodes {depth, kind, key, value}. Keys are
+// identifiers and strings are printable ASCII, so only quotes and backslashes
+// need escaping. Each node emits one line; bounded depth keeps closings cheap.
+const jsonString = text => `"${text.replace(/["\\]/g, '\\$&')}"`;
+export function nodesJSON(nodes) {
+  const lines = [];
+  const open = [];
+  for (let i = 0; i < nodes.length; i++) {
+    const { depth, kind, key, value } = nodes[i];
+    const next = i + 1 < nodes.length ? nodes[i + 1].depth : 0;
+    const container = kind === 'map' || kind === 'seq';
+    const children = container && next > depth;
+    const scalar = kind === 'map' ? (children ? '{' : '{}') : kind === 'seq' ? (children ? '[' : '[]')
+      : kind === 'str' ? jsonString(value) : kind === 'null' ? 'null' : value;
+    let line = '  '.repeat(depth) + (key ? `${jsonString(key)}: ` : '') + scalar;
+    if (children) { open[depth] = kind; lines.push(line); continue; }
+    for (let d = depth - 1; d >= next; d--) {
+      lines.push(line);
+      line = '  '.repeat(d) + (open[d] === 'map' ? '}' : ']');
+    }
+    lines.push(i + 1 < nodes.length ? `${line},` : line);
+  }
+  return lines.join('\n') + '\n';
+}

@@ -237,4 +237,51 @@ Describe 'YAM(M) — Minimal'
       End
     End
   End
+
+  Describe 'one-way JSON export'
+    # JSON is interoperability output only; there is no JSON input.
+    It 'exports an object in entry order whose values all stay strings'
+      Data
+        #|count: '123'
+        #|flag: 'true'
+        #|nothing: 'null'
+        #|empty: ''
+      End
+      When call run_yamx json
+      The status should be success
+      The output should eq "$(printf '{\n  "count": "123",\n  "flag": "true",\n  "nothing": "null",\n  "empty": ""\n}')"
+      The stderr should be blank
+    End
+
+    It 'escapes quotes and backslashes and keeps keys meaningful to JavaScript objects'
+      Data
+        #|__proto__: 'say "hi"'
+        #|constructor: 'C:\temp\'
+      End
+      When call run_yamx json
+      The status should be success
+      The output should eq "$(printf '{\n  "__proto__": "say \\"hi\\"",\n  "constructor": "C:\\\\temp\\\\"\n}')"
+      The stderr should be blank
+    End
+
+    It 'rejects a late duplicate without publishing partial JSON'
+      Data
+        #|name: 'first'
+        #|other: 'x'
+        #|name: 'second'
+      End
+      When call run_yamx json
+      The status should eq 1
+      The output should be blank
+      The stderr should start with 'E_DUPLICATE line 3:'
+    End
+
+    It 'keeps the final-LF requirement'
+      Data printf "name: 'x'"
+      When call run_yamx json
+      The status should eq 1
+      The output should be blank
+      The stderr should start with 'E_NEWLINE line 1:'
+    End
+  End
 End

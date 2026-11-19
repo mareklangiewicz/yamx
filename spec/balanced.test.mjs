@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { readFileSync, openSync, closeSync } from 'node:fs';
 import { parse as yamlParse } from 'yaml';
 import { cli, fixture, jsLibrary, distribution, distributionProfile } from './helpers.mjs';
-const { parse, generate, validate, YamxError } = await import(jsLibrary);
+const { parse, generate, toJSON, validate, YamxError } = await import(jsLibrary);
 const { nodeText, treeNodes } = await import(distribution ? jsLibrary : new URL('../src/balanced.mjs', import.meta.url));
 const standalone = distribution && distributionProfile === 'B';
 
@@ -16,6 +16,17 @@ function normalizeZero(value) {
   if (Array.isArray(value)) return value.map(normalizeZero);
   return Object.is(value, -0) ? 0 : value;
 }
+// Independent JSON reference: V8's JSON.stringify over the expected value.
+// defineProperty keeps keys such as __proto__ as ordinary own properties.
+function plain(value) {
+  if (Array.isArray(value)) return value.map(plain);
+  if (!(value instanceof Map)) return value;
+  const object = {};
+  for (const [key, child] of value)
+    Object.defineProperty(object, key, { value: plain(child), enumerable: true, writable: true, configurable: true });
+  return object;
+}
+const expectedJSON = value => `${JSON.stringify(plain(value), null, 2)}\n`;
 const oracle = text => normalizeZero(yamlParse(text, { version: '1.2', schema: 'core', mapAsMap: true }));
 function rejectAll(text, code, line, operation = 'parse') {
   if (operation === 'parse') assert.throws(() => parseB(text), error => error instanceof YamxError
@@ -41,7 +52,12 @@ function acceptAll(text, expected, useOracle = true) {
     assert.equal(generated.stderr, '');
     assert.equal(generated.stdout, generateB(expected));
     if (useOracle) assert.deepEqual(oracle(generated.stdout), expected);
+    const json = run(impl, 'json', text);
+    assert.equal(json.status, 0, json.stderr);
+    assert.equal(json.stderr, '');
+    assert.equal(json.stdout, expectedJSON(expected));
   }
+  assert.equal(toJSON(text, 'B'), expectedJSON(expected));
 }
 
 test('B example has independently expected nested meanings and YAML Core types', () => {
@@ -214,4 +230,18 @@ test('B plain strings with long interior space runs do not rescan suffixes', () 
   // The old unanchored / +#.../ scan exceeded the five-second CLI budget.
   const value = `a${' '.repeat(131072)}b`;
   acceptAll(`value: ${value}\n`, new Map([['value', value]]));
+});
+
+test('B toJSON keeps typed values, valid object-like keys and exact formatting', () => {
+  const text = "__proto__:\n  constructor: 'a\"b\\c'\n  count: 9007199254740991\n  list:\n    - -0\n    - []\n    - {}\n";
+  const json = '{\n  "__proto__": {\n    "constructor": "a\\"b\\\\c",\n    "count": 9007199254740991,\n'
+    + '    "list": [\n      0,\n      [],\n      {}\n    ]\n  }\n}\n';
+  assert.equal(toJSON(text, 'B'), json);
+  const decoded = JSON.parse(json);
+  assert.ok(Object.hasOwn(decoded, '__proto__') && Object.hasOwn(decoded.__proto__, 'constructor'));
+  for (const impl of ['shell', 'js', 'lua']) assert.equal(run(impl, 'json', text).stdout, json, impl);
+  if (standalone) assert.throws(() => toJSON(text, 'M'), TypeError);
+  else assert.throws(() => toJSON(text), YamxError, 'M remains the default');
+  rejectAll("a: 1\nb:\n  c: 1\n  c: 2\n", 'E_DUPLICATE', 4, 'json');
+  rejectAll("a: 1\r\n", 'E_CHARACTER', 1, 'json');
 });
