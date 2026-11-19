@@ -3,6 +3,7 @@ import { createHash } from 'node:crypto';
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { usagePaths } from './usage-paths.mjs';
 
 export const root = fileURLToPath(new URL('../', import.meta.url));
 function replace(source, before, after) {
@@ -101,10 +102,9 @@ ${sources['balanced.awk'].replaceAll("'", "'\\''")}' < "$file" > "$workspace/out
   ]);
 }
 export function sizes(artifacts = assemble(), profile = 'M') {
-  return [['shell CLI', ['yamx.sh']], ['JS library', ['yamx.mjs']], ['JS CLI', ['yamx.mjs', 'cli.mjs']],
-    ['Lua library', ['yamx.lua']], ['Lua CLI', ['yamx.lua', 'cli.lua']]].map(([usage, names]) => ({
-    profile, usage, files: names, bytes: names.reduce((n, name) => n + Buffer.byteLength(artifacts.get(name)), 0),
-    lines: names.reduce((n, name) => n + artifacts.get(name).split('\n').length - 1, 0),
+  return usagePaths.map(({ usage, files }) => ({
+    profile, usage, files, bytes: files.reduce((n, name) => n + Buffer.byteLength(artifacts.get(name)), 0),
+    lines: files.reduce((n, name) => n + artifacts.get(name).split('\n').length - 1, 0),
   }));
 }
 if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {

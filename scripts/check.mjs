@@ -24,6 +24,8 @@ function run(label, command, args, extraEnv = {}) {
 try {
   run('Distribution drift', process.execPath, ['scripts/distribute.mjs', '--check']);
   run('Distribution drift regression', process.execPath, ['--test', 'test/distribution.test.mjs']);
+  run('Copy guide drift', process.execPath, ['scripts/copy-guide.mjs', '--check']);
+  run('Copy guide examples and links', process.execPath, ['--test', 'test/copy-guide.test.mjs']);
   run('Static checks', 'sh', ['scripts/lint.sh']);
   for (const shell of ['dash', 'bash', 'zsh']) {
     run(`Required shell: ${shell}`, shell, ['-c', 'exit 0']);

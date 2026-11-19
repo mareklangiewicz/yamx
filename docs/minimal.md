@@ -9,6 +9,10 @@ establish an inclusion relationship with other profiles; specifications must
 define those relationships. See the [family overview](../README.md) for naming
 and the implemented [YAM(B) — Balanced](balanced.md) superset.
 
+To use M without the rest of the repository, copy one standalone file from
+[`dist/minimal`](../dist/minimal): the shell CLI, the JavaScript library or the
+Lua library. See [copy a file](../README.md#copy-a-file) for links and sizes.
+
 ## Document grammar
 
 ```ebnf

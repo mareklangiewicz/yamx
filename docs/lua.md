@@ -6,7 +6,10 @@ syntax and standard APIs available in newer Lua versions. It never evaluates
 YAMX input as code. It does not depend on luagnd or invoke either other parser.
 
 Load it with `require('yamx')` after adding `src/?.lua` to your package path,
-or use `dofile` with an explicit path:
+or use `dofile` with an explicit path. Without a checkout, copy the single
+standalone `yamx.lua` for one profile from [`dist/minimal`](../dist/minimal) or
+[`dist/balanced`](../dist/balanced). Add `cli.lua` beside it for the CLI. See
+[copy and run](distributions.md#copy-and-run).
 
 ```lua
 local yamx = dofile('src/yamx.lua')

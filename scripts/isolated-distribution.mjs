@@ -3,13 +3,13 @@ import { copyFileSync, mkdirSync, mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { root } from './distribute.mjs';
+import { profileFolders, usagePaths } from './usage-paths.mjs';
 
 export function isolate(directory = root, profile = 'M') {
   const temporary = mkdtempSync(join(tmpdir(), 'yamx-distribution-'));
-  for (const [usage, names] of [['shell', ['yamx.sh']], ['js-library', ['yamx.mjs']],
-    ['js', ['yamx.mjs', 'cli.mjs']], ['lua-library', ['yamx.lua']], ['lua', ['yamx.lua', 'cli.lua']]]) {
-    mkdirSync(join(temporary, usage));
-    for (const name of names) copyFileSync(join(directory, 'dist', profile === 'B' ? 'balanced' : 'minimal', name), join(temporary, usage, name));
+  for (const { key, files } of usagePaths) {
+    mkdirSync(join(temporary, key));
+    for (const name of files) copyFileSync(join(directory, 'dist', profileFolders[profile], name), join(temporary, key, name));
   }
   return { directory: temporary, close: () => rmSync(temporary, { recursive: true, force: true }) };
 }

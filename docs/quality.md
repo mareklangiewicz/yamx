@@ -41,7 +41,11 @@ itself. It also runs both profiles’ shared specifications and interface/CLI/by
 cases against the exact distributed files in isolated directories with only the
 documented runtime file sets. See [standalone artifacts](distributions.md) for
 assembly, provenance and complete sizes. Each distribution stage retains the
-same two-minute budget.
+same two-minute budget. The size, revision and example blocks in the README and
+distributions page are generated from the committed files and checked for
+drift. Each documented copy/download snippet runs verbatim for both profiles in
+an empty directory outside the checkout, with a local `curl` stand-in. Relative
+documentation links and anchors must resolve.
 
 The gate runs bounded ShellCheck, JavaScript syntax checks, the shared ShellSpec
 contract under dash/Bash/zsh, the JS version of that contract, and Node API/CLI,

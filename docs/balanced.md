@@ -8,6 +8,10 @@ explicitly; M remains the default. Names alone define no other relationships.
 YAMX is experimental; profile grammars can evolve with their implementations
 and executable specifications, without formal migrations.
 
+To use B without the rest of the repository, copy one standalone file from
+[`dist/balanced`](../dist/balanced). These files default to B and contain no
+separate M parser. See [copy a file](../README.md#copy-a-file) for links and sizes.
+
 ## Collections and layout
 
 - One root mapping or sequence, starting at column 1. Root scalars are excluded.
