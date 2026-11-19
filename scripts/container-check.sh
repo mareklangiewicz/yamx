@@ -1,8 +1,8 @@
 #!/bin/sh
 set -eu
 # Source is mounted read-only; all test scratch and copied code stay disposable.
-# README.md and docs/ carry the generated copy-guide blocks that the gate checks.
-cp -R /src/LICENSE /src/README.md /src/docs /src/src /src/dist /src/examples /src/spec /src/scripts /src/hooks /src/test /src/.shellspec /work/
+# README.md, AGENTS.md and docs/ hold the copy guide and the targets of its checked links.
+cp -R /src/LICENSE /src/README.md /src/AGENTS.md /src/docs /src/src /src/dist /src/examples /src/spec /src/scripts /src/hooks /src/test /src/.shellspec /work/
 ln -s /opt/dependencies/node_modules /work/node_modules
 cd /work
 apk info -v
