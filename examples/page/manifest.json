@@ -1,0 +1,11 @@
+[
+  { "id": "b-catalog", "profile": "B", "label": "A small catalog", "file": "b-catalog.yaml" },
+  { "id": "b-nested", "profile": "B", "label": "Nested records", "file": "b-nested.yaml" },
+  { "id": "b-strings", "profile": "B", "label": "Strings and quoting", "file": "b-strings.yaml" },
+  { "id": "b-unsupported", "profile": "B", "label": "An unsupported feature", "file": "b-unsupported.yaml",
+    "error": { "code": "E_STRING", "line": 1 } },
+  { "id": "m-catalog", "profile": "M", "label": "A minimal catalog entry", "file": "m-catalog.yaml" },
+  { "id": "m-strings", "profile": "M", "label": "Everything is a string", "file": "m-strings.yaml" },
+  { "id": "m-nesting", "profile": "M", "label": "Nesting is outside M", "file": "m-nesting.yaml",
+    "error": { "code": "E_SYNTAX", "line": 2 } }
+]

@@ -143,6 +143,17 @@ generate(tree, 'B');
 toJSON('count: 3\n', 'B');        // '{\n  "count": 3\n}\n'
 ```
 
+## Web page
+
+[mareklangiewicz.pl/yamx](https://mareklangiewicz.pl/yamx/) introduces the profiles, has a
+playground that validates and exports JSON in the browser, and repeats the copy
+guide with links pinned to the commit it was built from. Its source is
+[`site/`](site): one shared content model, three alternative layouts and a
+DOM-free playground module, running the exact `dist/*/yamx.mjs` files. Build it
+with `node scripts/site.mjs` (output in `_site/`). Page examples live in
+[`examples/page`](examples/page) with a manifest the gate checks. See
+[quality discipline](docs/quality.md#web-page) for its checks and deployment.
+
 ## Executable specification
 
 [ShellSpec](https://github.com/shellspec/shellspec) is the primary behavioral

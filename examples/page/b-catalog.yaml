@@ -1,0 +1,8 @@
+# Readable data, with room to grow
+name: YAMX
+active: true
+retries: 3
+items:
+  - shell
+  - javascript
+optional: null

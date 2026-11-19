@@ -2,7 +2,7 @@
 set -eu
 # Source is mounted read-only; all test scratch and copied code stay disposable.
 # README.md, AGENTS.md and docs/ hold the copy guide and the targets of its checked links.
-cp -R /src/LICENSE /src/README.md /src/AGENTS.md /src/docs /src/src /src/dist /src/examples /src/spec /src/scripts /src/hooks /src/test /src/.shellspec /work/
+cp -R /src/LICENSE /src/README.md /src/AGENTS.md /src/docs /src/site /src/src /src/dist /src/examples /src/spec /src/scripts /src/hooks /src/test /src/.shellspec /work/
 ln -s /opt/dependencies/node_modules /work/node_modules
 cd /work
 apk info -v

@@ -129,6 +129,34 @@ Collection depth is bounded at 32. Lua hash-table lookups have expected rather
 than guaranteed constant cost; this is not a worst-case linearity proof.
 Both benchmark drivers include Lua 5.1, LuaJIT and Lua 5.4.
 
+## Web page
+
+The page in `site/` uses the exact standalone JS libraries, so it has no parser of its
+own to verify. The gate (`test/site.test.mjs`) checks:
+- every page example against its profile, using the manifest's expected error codes and lines;
+- the DOM-free playground logic: drafts, evaluation, the explicit final-LF fix and the live-size limit;
+- that every layout renders each section exactly once and adds no text of its own;
+- that the build ships the exact libraries and pins every link to the built commit.
+
+A browser textarea converts pasted CRLF and CR to LF before any script sees it,
+so the page reports that conversion at paste time instead of offering a CRLF fix.
+
+`test/browser.test.mjs` serves a fresh build under `/yamx/` and drives headless
+Chromium through Playwright, which is pinned in `package-lock.json`. It checks:
+- every layout at desktop and phone widths;
+- the example JSON and diagnostics;
+- draft retention across switches;
+- the newline fix and the paste notice;
+- Copy, the remembered theme and layout, and the deferred validation of large input;
+- that no request leaves the page's own origin and no script errors occur.
+
+It also prints measured parse times; B `toJSON` took about 0.2 s for 1 MiB and 0.7 s for 4 MiB in Chromium here, which set the 1 MiB live limit. CI runs this check as the `browser` job of the Quality workflow. Locally run `node --test test/browser.test.mjs`, optionally with `YAMX_CHROME=/path/to/chrome` instead of Playwright's Chromium; it is not part of `scripts/check.sh`.
+
+`.github/workflows/pages.yml` deploys only after the Quality workflow succeeds for a
+push to main, building from that same commit, so a push to main is the deploy
+authorization. After deploying, `scripts/verify-pages.mjs` polls the live
+`generated.mjs` until it carries that commit, and fails after a bounded wait.
+
 ## Deeper loops
 
 ```sh

@@ -26,6 +26,7 @@ try {
   run('Distribution drift regression', process.execPath, ['--test', 'test/distribution.test.mjs']);
   run('Copy guide drift', process.execPath, ['scripts/copy-guide.mjs', '--check']);
   run('Copy guide examples and links', process.execPath, ['--test', 'test/copy-guide.test.mjs']);
+  run('Page examples, playground logic, layouts and build', process.execPath, ['--test', 'test/site.test.mjs']);
   run('Static checks', 'sh', ['scripts/lint.sh']);
   for (const shell of ['dash', 'bash', 'zsh']) {
     run(`Required shell: ${shell}`, shell, ['-c', 'exit 0']);
