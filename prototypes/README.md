@@ -1,3 +1,7 @@
+> **Superseded.** The production page is built from [`site/` on main](https://github.com/mareklangiewicz/yamx/tree/main/site)
+> (issue #11) and deployed by `.github/workflows/pages.yml`. This branch is kept
+> as the record of the A/B/C layout review; its preview is no longer published.
+
 # Introduction prototype
 
 Question: which introductory story and page layout helps new visitors understand
