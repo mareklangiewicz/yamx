@@ -18,7 +18,11 @@ runners may use plain ShellCheck inside their disposable environments.
 sh scripts/setup.sh          # npm ci, install local hooks, verify dependencies
 sh scripts/setup.sh --verify # detect missing tools, oracle, or hook configuration
 sh scripts/check.sh          # authoritative fast gate
+sh scripts/check.sh --quick  # seconds: drift, lint, copy guide, page and ledger tests
 ```
+
+`--quick` is an editing loop, not a gate: it skips the three-language matrix
+and never records a pass.
 
 Set `SHELLSPEC=/path/to/shellspec` to select a checkout explicitly. Otherwise a
 repo-local `.tools/shellspec/shellspec` takes precedence over PATH. To install
@@ -55,6 +59,16 @@ and Lua 5.4; YAMX_LUA selects the runtime in focused test invocations.
 Every target is required; missing tools fail. Independent checks continue after
 failure, and the final exit status aggregates the failures. The local pre-push
 hook runs the same gate as CI. Hooks can be bypassed, so they supplement CI.
+
+A complete gate that passes on a clean checkout (no staged, unstaged or untracked
+changes, before and after the run) appends HEAD's tree hash to the
+`yamx-gate-pass` ledger in the Git directory. The pre-push hook skips the rerun
+when every pushed commit's tree is in the ledger and runs the full gate otherwise,
+so commit first, then run the gate, then push. A reworded commit keeps its tree.
+A pass recorded with other local tools is trusted as is; CI reruns everything.
+A long hook can outlive the push connection: once `git push` died with SIGPIPE
+after the gate passed and no refs landed (#12). After every push, confirm that
+`git ls-remote origin main` matches `git rev-parse HEAD`.
 The complete three-language matrix takes a few minutes; individual stages
 retain the budgets below rather than a brittle total-time assertion.
 
@@ -151,6 +165,7 @@ Chromium through Playwright, which is pinned in `package-lock.json`. It checks:
 - that no request leaves the page's own origin and no script errors occur.
 
 It also prints measured parse times; B `toJSON` took about 0.2 s for 1 MiB and 0.7 s for 4 MiB in Chromium here, which set the 1 MiB live limit. CI runs this check as the `browser` job of the Quality workflow. Locally run `node --test test/browser.test.mjs`, optionally with `YAMX_CHROME=/path/to/chrome` instead of Playwright's Chromium; it is not part of `scripts/check.sh`.
+Set large inputs with `page.evaluate`, not `page.fill`: a failing `fill` echoes its whole argument into the error.
 
 `.github/workflows/pages.yml` deploys only after the Quality workflow succeeds for a
 push to main, building from that same commit, so a push to main is the deploy
@@ -166,7 +181,9 @@ sh scripts/portability.sh --deep # mutations in dash/bash/zsh + full scaling sam
 
 Use `ENGINE=docker` instead of the default Podman if desired. Containers mount
 source read-only, copy the code into disposable storage, disable runtime network,
-and cap memory at 768 MiB and processes at 256. Results go to `.quality-out/`.
+and cap memory at 768 MiB and processes at 256. The copy holds exactly the
+files `git ls-files --cached --others --exclude-standard` lists, with their
+working-tree content. Results go to `.quality-out/`.
 The Node/Alpine base is pinned by digest, ShellSpec by commit, and npm dependencies
 by lockfile. Alpine utility packages still receive repository updates; their
 versions are printed so results can be interpreted. Ubuntu CI also records the

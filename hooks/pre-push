@@ -1,4 +1,7 @@
 #!/bin/sh
 set -eu
 cd "$(git rev-parse --show-toplevel)"
+# Git passes the pushed refs on stdin. When every pushed tree already passed the
+# complete gate on a clean checkout (scripts/gate-ledger.mjs), skip the rerun.
+if node scripts/gate-ledger.mjs covers; then exit 0; fi
 exec sh scripts/check.sh

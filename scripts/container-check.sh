@@ -1,8 +1,18 @@
 #!/bin/sh
 set -eu
 # Source is mounted read-only; all test scratch and copied code stay disposable.
-# README.md, AGENTS.md and docs/ hold the copy guide and the targets of its checked links.
-cp -R /src/LICENSE /src/README.md /src/AGENTS.md /src/docs /src/site /src/src /src/dist /src/examples /src/spec /src/scripts /src/hooks /src/test /src/.shellspec /work/
+# Copy exactly the files the host gate sees: tracked plus untracked-but-not-ignored,
+# with their working-tree content. A hand-written path list once missed AGENTS.md.
+# The mount's owner differs from the container user under Docker, hence safe.directory.
+# BusyBox tar has no --null, so Node copies the NUL-separated list. POSIX sh has no
+# pipefail, so an empty list (git failed) fails the copy explicitly.
+git -c safe.directory=/src -C /src ls-files -z --cached --others --exclude-standard | node -e '
+const { cpSync, existsSync, readFileSync } = require("node:fs");
+const paths = readFileSync(0, "utf8").split("\0").filter(Boolean);
+if (!paths.length) throw new Error("git ls-files listed nothing under /src");
+for (const path of paths)
+  if (existsSync("/src/" + path)) cpSync("/src/" + path, "/work/" + path, { verbatimSymlinks: true });
+'
 ln -s /opt/dependencies/node_modules /work/node_modules
 cd /work
 apk info -v

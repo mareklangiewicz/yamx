@@ -59,6 +59,10 @@ Keep diagnostics useful and test stable error codes and line numbers.
 Before changing code or quality controls, read `docs/quality.md` for the
 regression-first workflow, resource budgets, and definition of done.
 Run `sh scripts/check.sh`; dash, Bash, and native zsh are required targets.
+Commit before running it: a pass on a clean checkout lets the pre-push hook skip
+the rerun. `sh scripts/check.sh --quick` is the seconds-long editing loop.
+Web page: `site/`, deployed from main by `.github/workflows/pages.yml`; read
+docs/quality.md#web-page before changing it.
 Node's built-in tests supplement ShellSpec for API and cross-language checks.
 Document any checks that could not run. Change grammar, implementation, and
 executable examples together. Keep the implementation understandable before

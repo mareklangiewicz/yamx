@@ -3,10 +3,20 @@ import { existsSync, mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { cleanTree, recordPass } from './gate-ledger.mjs';
 
+const args = process.argv.slice(2);
+if (args.length > 1 || (args.length && args[0] !== '--quick')) {
+  console.error('usage: sh scripts/check.sh [--quick]');
+  process.exit(2);
+}
+// --quick runs only the seconds-long drift, lint, guide and page checks. It is a
+// development loop, not a gate: it never records a pass for the pre-push hook.
+const quick = args[0] === '--quick';
 const root = fileURLToPath(new URL('../', import.meta.url));
 const temporary = mkdtempSync(join(tmpdir(), 'yamx-check-'));
 const start = performance.now();
+const startTree = quick ? null : cleanTree(root);
 const failures = [];
 const env = { ...process.env, TMPDIR: temporary };
 const pinnedShellspec = join(root, '.tools/shellspec/shellspec');
@@ -23,37 +33,45 @@ function run(label, command, args, extraEnv = {}) {
 }
 try {
   run('Distribution drift', process.execPath, ['scripts/distribute.mjs', '--check']);
-  run('Distribution drift regression', process.execPath, ['--test', 'test/distribution.test.mjs']);
+  if (!quick) run('Distribution drift regression', process.execPath, ['--test', 'test/distribution.test.mjs']);
   run('Copy guide drift', process.execPath, ['scripts/copy-guide.mjs', '--check']);
   run('Copy guide examples and links', process.execPath, ['--test', 'test/copy-guide.test.mjs']);
   run('Page examples, playground logic, layouts and build', process.execPath, ['--test', 'test/site.test.mjs']);
   run('Static checks', 'sh', ['scripts/lint.sh']);
-  for (const shell of ['dash', 'bash', 'zsh']) {
-    run(`Required shell: ${shell}`, shell, ['-c', 'exit 0']);
-    run(`YAM(M) and YAM(B) specifications: ${shell}`, shellspec, ['--format', 'progress', 'spec'], {
-      YAMX_IMPL: 'shell', YAMX_SHELL: shell,
-    });
-    run(`API, bytes, generated cases, CLI: ${shell}`, process.execPath,
-      ['--test', 'spec/balanced.test.mjs', 'spec/api.test.mjs', 'spec/cli.test.mjs', 'spec/generated.test.mjs', 'spec/interop.test.mjs'],
-      { YAMX_SHELL: shell });
-    for (const profile of ['M', 'B'])
-      run(`Standalone ${profile}: ${shell}`, process.execPath, ['scripts/check-distribution.mjs', '--profile', profile, '--shell', shell]);
+  run('Pre-push gate ledger', process.execPath, ['--test', 'test/gate-ledger.test.mjs']);
+  if (!quick) {
+    for (const shell of ['dash', 'bash', 'zsh']) {
+      run(`Required shell: ${shell}`, shell, ['-c', 'exit 0']);
+      run(`YAM(M) and YAM(B) specifications: ${shell}`, shellspec, ['--format', 'progress', 'spec'], {
+        YAMX_IMPL: 'shell', YAMX_SHELL: shell,
+      });
+      run(`API, bytes, generated cases, CLI: ${shell}`, process.execPath,
+        ['--test', 'spec/balanced.test.mjs', 'spec/api.test.mjs', 'spec/cli.test.mjs', 'spec/generated.test.mjs', 'spec/interop.test.mjs'],
+        { YAMX_SHELL: shell });
+      for (const profile of ['M', 'B'])
+        run(`Standalone ${profile}: ${shell}`, process.execPath, ['scripts/check-distribution.mjs', '--profile', profile, '--shell', shell]);
+    }
+    for (const lua of ['lua5.1', 'luajit', 'lua5.4']) {
+      run(`Lua syntax: ${lua}`, lua, ['-e', "assert(loadfile('src/yamx.lua')); assert(loadfile('src/cli.lua')); assert(loadfile('spec/lua_api.lua'))"]);
+      run(`Lua shared specification: ${lua}`, shellspec, ['--format', 'progress', 'spec'],
+        { YAMX_IMPL: 'lua', YAMX_LUA: lua });
+      run(`Lua API and CLI contracts: ${lua}`, process.execPath,
+        ['--test', 'spec/lua.test.mjs', 'spec/balanced.test.mjs', 'spec/cli.test.mjs'], { YAMX_LUA: lua });
+      for (const profile of ['M', 'B'])
+        run(`Standalone ${profile}: ${lua}`, process.execPath, ['scripts/check-distribution.mjs', '--profile', profile, '--lua', lua]);
+    }
+    for (const profile of ['M', 'B']) {
+      run(`Standalone ${profile}: JavaScript`, process.execPath, ['scripts/check-distribution.mjs', '--profile', profile, '--js']);
+      if (env.YAMX_BUSYBOX) run(`Standalone ${profile}: BusyBox ash`, process.execPath, ['scripts/check-distribution.mjs', '--profile', profile, '--shell', '/bin/ash']);
+    }
+    run('JavaScript shared specification', shellspec, ['--format', 'progress', 'spec'], { YAMX_IMPL: 'js' });
   }
-  for (const lua of ['lua5.1', 'luajit', 'lua5.4']) {
-    run(`Lua syntax: ${lua}`, lua, ['-e', "assert(loadfile('src/yamx.lua')); assert(loadfile('src/cli.lua')); assert(loadfile('spec/lua_api.lua'))"]);
-    run(`Lua shared specification: ${lua}`, shellspec, ['--format', 'progress', 'spec'],
-      { YAMX_IMPL: 'lua', YAMX_LUA: lua });
-    run(`Lua API and CLI contracts: ${lua}`, process.execPath,
-      ['--test', 'spec/lua.test.mjs', 'spec/balanced.test.mjs', 'spec/cli.test.mjs'], { YAMX_LUA: lua });
-    for (const profile of ['M', 'B'])
-      run(`Standalone ${profile}: ${lua}`, process.execPath, ['scripts/check-distribution.mjs', '--profile', profile, '--lua', lua]);
-  }
-  for (const profile of ['M', 'B']) {
-    run(`Standalone ${profile}: JavaScript`, process.execPath, ['scripts/check-distribution.mjs', '--profile', profile, '--js']);
-    if (env.YAMX_BUSYBOX) run(`Standalone ${profile}: BusyBox ash`, process.execPath, ['scripts/check-distribution.mjs', '--profile', profile, '--shell', '/bin/ash']);
-  }
-  run('JavaScript shared specification', shellspec, ['--format', 'progress', 'spec'], { YAMX_IMPL: 'js' });
 } finally { rmSync(temporary, { recursive: true, force: true }); }
-console.log(`\nGate: ${failures.length ? 'FAIL' : 'PASS'} in ${((performance.now() - start) / 1000).toFixed(1)}s`);
+const elapsed = ((performance.now() - start) / 1000).toFixed(1);
+console.log(`\n${quick ? 'Quick checks' : 'Gate'}: ${failures.length ? 'FAIL' : 'PASS'} in ${elapsed}s`);
+if (!quick && !failures.length && startTree) {
+  if (recordPass(root, startTree)) console.log(`Recorded tree ${startTree} for the pre-push hook.`);
+  else console.log('Checkout changed during the gate; no pass recorded for the pre-push hook.');
+}
 if (failures.length) console.error(`Failed checks: ${failures.join(', ')}`);
 process.exitCode = failures.length ? 1 : 0;
