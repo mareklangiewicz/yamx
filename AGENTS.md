@@ -17,7 +17,8 @@ future features.
   docs/minimal.md.
 - YAM(B) — Balanced is implemented and specified in docs/balanced.md. It is a
   strict language superset of M, preserving its YAML meanings and existing
-  overlong-key acceptance. M remains the default; B is selected explicitly.
+  overlong-key acceptance. B is the default; M is selected explicitly. Standalone
+  files default to their one profile.
 - Keep future ideas separate from implemented guarantees.
 - Maintain independent POSIX shell, plain JavaScript, and Lua implementations.
 - Shell runtime dependencies are builtins and POSIX od, awk, sort, cat, mkdir,

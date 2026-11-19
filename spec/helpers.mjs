@@ -32,3 +32,17 @@ export function cli(implementation, args, options = {}) {
   if (result.signal) throw new Error(`${command} terminated by ${result.signal}`);
   return result;
 }
+
+// B is the default profile. M-specific suites select M explicitly, which every
+// combined and standalone M interface accepts; an explicit --profile wins.
+export function minimalCli(implementation, args, options) {
+  return cli(implementation, args[0] === '--profile' ? args : ['--profile', 'M', ...args], options);
+}
+export async function minimalLibrary() {
+  const library = await import(jsLibrary);
+  return { ...library,
+    parse: (text, profile = 'M') => library.parse(text, profile),
+    validate: (text, profile = 'M') => library.validate(text, profile),
+    generate: (value, profile = 'M') => library.generate(value, profile),
+    toJSON: (text, profile = 'M') => library.toJSON(text, profile) };
+}

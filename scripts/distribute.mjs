@@ -63,6 +63,13 @@ export function assemble(directory = root, profile = 'M') {
   jscli = replace(jscli, '[--profile M|B]', `[--profile ${profile}]`);
   let luacli = replace(sources['cli.lua'], "selected ~= 'M' and selected ~= 'B'", `selected ~= '${profile}'`);
   luacli = replace(luacli, '[--profile M|B]', `[--profile ${profile}]`);
+  if (profile === 'M') {
+    // The combined interfaces default to B; standalone M has M as its one profile.
+    sh = replace(sh, 'profile=B\n', 'profile=M\n');
+    lua = replace(lua, "if value == nil then return 'B' end", "if value == nil then return 'M' end");
+    jscli = replace(jscli, "let profile = 'B';", "let profile = 'M';");
+    luacli = replace(luacli, "local selected, offset = 'B', 1", "local selected, offset = 'M', 1");
+  }
   if (profile === 'B') {
     const balanced = replace(sources['balanced.mjs'], "import { checkText, nodesJSON, YamxError } from './common.mjs';\n", '');
     js = balanced + `
@@ -75,7 +82,6 @@ export function validate(text, profile = 'B') { selectBalanced(profile); validat
 export function generate(value, profile = 'B') { selectBalanced(profile); return generateBalanced(value); }
 export function toJSON(text, profile = 'B') { selectBalanced(profile); return jsonBalanced(text); }
 `;
-    sh = replace(sh, 'profile=M\n', 'profile=B\n');
     // The selected B branches have no M alternative after section selection.
     sh = sh.replace(/\nelse\n(?:\n)*fi\n/g, '\nfi\n');
     const external = `  # Use the bundled awk source beside this entry point, independent of caller cwd.
@@ -85,13 +91,10 @@ export function toJSON(text, profile = 'B') { selectBalanced(profile); return js
     sh = replace(sh, external, `  # Embedded POSIX awk parser; no adjacent source file is needed.
   if YAMX_KEYS="$workspace/keys" YAMX_ERROR="$workspace/error" awk -v operation="$operation" '
 ${sources['balanced.awk'].replaceAll("'", "'\\''")}' < "$file" > "$workspace/output"; then`);
-    lua = replace(lua, "if value == nil then return 'M' end", "if value == nil then return 'B' end");
-    jscli = replace(jscli, "let profile = 'M';", "let profile = 'B';");
     jscli = replace(jscli, "from './balanced.mjs'", "from './yamx.mjs'");
     // The top-level M import is not part of the B-only CLI interface.
     jscli = replace(jscli, 'checkText, generate, parse, toJSON, validate, YamxError', 'toJSON, YamxError');
     jscli = replace(jscli, '  } else\n', '  }\n');
-    luacli = replace(luacli, "local selected, offset = 'M', 1", "local selected, offset = 'B', 1");
   }
   return new Map([
     ['yamx.sh', '#!/bin/sh\n' + header('#') + replace(sh, '#!/bin/sh\n', '')],

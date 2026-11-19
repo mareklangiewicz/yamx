@@ -13,15 +13,15 @@ standalone `yamx.lua` for one profile from [`dist/minimal`](../dist/minimal) or
 
 ```lua
 local yamx = dofile('src/yamx.lua')
-local entries = yamx.parse("name: 'yamx'\n")
+local entries = yamx.parse("name: 'yamx'\n", 'M')
 assert(entries[1][1] == 'name' and entries[1][2] == 'yamx')
-local text = yamx.generate(entries)
-yamx.validate(text) -- returns nil on success
-assert(yamx.to_json(text) == '{\n  "name": "yamx"\n}\n')
+local text = yamx.generate(entries, 'M')
+yamx.validate(text, 'M') -- returns nil on success
+assert(yamx.to_json(text, 'M') == '{\n  "name": "yamx"\n}\n')
 ```
 
 `parse(text, profile)`, `validate(text, profile)`, and `generate(value, profile)`
-use M when profile is omitted or nil. Select `'B'` explicitly for Balanced.
+use B when profile is omitted or nil. Select `'M'` explicitly for Minimal.
 M parses to a dense ordered list of `{key, string}` pairs.
 
 ## Balanced values
@@ -76,10 +76,10 @@ API generation numbers M entries or B preorder nodes, including the root.
 ## CLI and development transport
 
 ```sh
-lua5.1 src/cli.lua validate examples/minimal.yaml
-luajit src/cli.lua --profile B parse examples/balanced.yaml > nodes.tsv
-lua5.4 src/cli.lua --profile B generate nodes.tsv
-lua5.4 src/cli.lua --profile B json examples/balanced.yaml
+lua5.1 src/cli.lua --profile M validate examples/minimal.yaml
+luajit src/cli.lua parse examples/balanced.yaml > nodes.tsv
+lua5.4 src/cli.lua generate nodes.tsv
+lua5.4 src/cli.lua json examples/balanced.yaml
 ```
 
 The CLI matches shell/JavaScript operations and exit codes: 0 success, 1 invalid

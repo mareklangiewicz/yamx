@@ -83,17 +83,23 @@ test('B scalar boundaries include all printable string bytes, quoting gotchas an
   acceptAll('- yes\n- false\n- null\n- []\n- {}\n', ['yes', false, null, [], new Map()]);
 });
 
-test('B is a strict superset of M without changing M defaults or string semantics', () => {
+test('B is the default and a strict superset of M without changing M string semantics', () => {
   for (let seed = 1; seed <= 12; seed++) {
     const entries = Array.from({ length: seed }, (_, i) => [`key_${i}`, ` ${seed} # : \\ true `]);
-    const minimal = standalone ? entries.map(([key, value]) => `${key}: '${value}'\n`).join('') : generate(entries);
+    const minimal = standalone ? entries.map(([key, value]) => `${key}: '${value}'\n`).join('') : generate(entries, 'M');
     const expected = new Map(entries);
-    if (!standalone) assert.deepEqual(parse(minimal), entries);
+    if (!standalone) assert.deepEqual(parse(minimal, 'M'), entries);
     acceptAll(minimal, expected);
   }
-  if (standalone) assert.deepEqual(parse('name: bare\n'), new Map([['name', 'bare']]));
-  else {
-    assert.throws(() => parse('name: bare\n'), YamxError);
+  // Without a profile argument every interface selects B; M must be selected explicitly.
+  assert.deepEqual(parse('name: bare\n'), new Map([['name', 'bare']]));
+  for (const impl of ['shell', 'js', 'lua']) {
+    const implicit = fixture(({ write }) => cli(impl, ['json', write('name: bare\n')]));
+    assert.equal(implicit.status, 0, implicit.stderr);
+    assert.equal(implicit.stdout, '{\n  "name": "bare"\n}\n');
+  }
+  if (!standalone) {
+    assert.throws(() => parse('name: bare\n', 'M'), YamxError);
     for (const impl of ['shell', 'js', 'lua']) {
       const explicit = fixture(({ write }) => cli(impl, ['--profile', 'M', 'parse', write("name: 'x'\n")]));
       assert.equal(explicit.status, 0, explicit.stderr);
@@ -241,7 +247,8 @@ test('B toJSON keeps typed values, valid object-like keys and exact formatting',
   assert.ok(Object.hasOwn(decoded, '__proto__') && Object.hasOwn(decoded.__proto__, 'constructor'));
   for (const impl of ['shell', 'js', 'lua']) assert.equal(run(impl, 'json', text).stdout, json, impl);
   if (standalone) assert.throws(() => toJSON(text, 'M'), TypeError);
-  else assert.throws(() => toJSON(text), YamxError, 'M remains the default');
+  else assert.throws(() => toJSON(text, 'M'), YamxError, 'M rejects nested values');
+  assert.equal(toJSON(text), json, 'B is the default');
   rejectAll("a: 1\nb:\n  c: 1\n  c: 2\n", 'E_DUPLICATE', 4, 'json');
   rejectAll("a: 1\r\n", 'E_CHARACTER', 1, 'json');
 });

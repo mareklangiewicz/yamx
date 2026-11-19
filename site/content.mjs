@@ -25,14 +25,14 @@ export const content = {
     title: 'Two profiles. Explicit boundaries.',
     intro: 'Choose the features your data needs. B includes M and preserves its meanings; the specifications define that relationship.',
     list: [
-      { id: 'B', name: 'YAM(B) — Balanced', tag: 'Start here', summary: 'Nested collections, readable values and comments.',
+      { id: 'B', name: 'YAM(B) — Balanced', tag: 'Default', summary: 'Nested collections, readable values and comments.',
         sample: 'name: YAMX\nactive: true\nitems:\n  - shell\n  - javascript\n',
         points: ['Maps and sequences, indented two spaces', 'Strings, safe integers, booleans and null', 'Comments and single-quoted strings'] },
-      { id: 'M', name: 'YAM(M) — Minimal', tag: 'Current default', summary: 'A tiny flat mapping. Every value is a string.',
+      { id: 'M', name: 'YAM(M) — Minimal', tag: 'Smallest', summary: 'A tiny flat mapping. Every value is a string.',
         sample: "name: 'yamx'\nactive: 'true'\ntool: 'shell'\n",
         points: ['Identifier keys and single-quoted strings', 'No nesting, comments or implicit types', 'A deliberately small grammar'] },
     ],
-    fine: 'Command-line tools and libraries default to M today; select B explicitly. Profile names describe feature bundles; they do not define an inclusion hierarchy.',
+    fine: 'Command-line tools and libraries default to B; select M explicitly. Standalone files default to their one profile. Profile names describe feature bundles; they do not define an inclusion hierarchy.',
   },
 
   playground: {

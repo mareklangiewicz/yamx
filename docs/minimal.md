@@ -53,18 +53,20 @@ round trips, not asserted to be an ordered YAML mapping type.
 ## CLI contract
 
 ```sh
-sh src/yamx.sh validate FILE
-sh src/yamx.sh parse FILE
-sh src/yamx.sh generate FILE
-sh src/yamx.sh json FILE
+sh src/yamx.sh --profile M validate FILE
+sh src/yamx.sh --profile M parse FILE
+sh src/yamx.sh --profile M generate FILE
+sh src/yamx.sh --profile M json FILE
 
-node src/cli.mjs validate FILE
-node src/cli.mjs parse FILE
-node src/cli.mjs generate FILE
-node src/cli.mjs json FILE
+node src/cli.mjs --profile M validate FILE
+node src/cli.mjs --profile M parse FILE
+node src/cli.mjs --profile M generate FILE
+node src/cli.mjs --profile M json FILE
 ```
 
-`lua src/cli.lua` accepts the same operations.
+`lua src/cli.lua --profile M` accepts the same operations. The combined CLIs
+and libraries default to B, so select M explicitly; the standalone
+[`dist/minimal`](../dist/minimal) files default to M.
 
 Input is a stable readable regular file. Do not mutate it during processing:
 the shell CLI inspects bytes with `od` before reading lines. Standard input and

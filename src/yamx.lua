@@ -28,7 +28,7 @@ function M.kind(value)
 end
 -- @balanced-end
 local function profile(value)
-  if value == nil then return 'M' end
+  if value == nil then return 'B' end
 -- @minimal-begin
   if value == 'M' then return 'M' end
 -- @minimal-end

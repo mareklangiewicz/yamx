@@ -26,9 +26,9 @@ is not the destination.
 ## Status
 
 Experimental. **YAM(M) — Minimal** and **YAM(B) — Balanced** are implemented.
-Their grammars can evolve with their specifications and tests. M remains the
-default; select B explicitly with `--profile B` in any CLI or the second
-argument `'B'` in the JavaScript or Lua API. There is no general profile configuration
+Their grammars can evolve with their specifications and tests. B is the
+default; select M explicitly with `--profile M` in any CLI or the second
+argument `'M'` in the JavaScript or Lua API. There is no general profile configuration
 API yet.
 
 ```yaml
@@ -100,25 +100,25 @@ these exact files outside the checkout, along with the
 - **JavaScript:** `src/yamx.mjs`, an independent dependency-free ES module,
   plus the Node CLI `src/cli.mjs`. No runtime packages or consumer build step.
 
-All three CLIs take an operation and a readable, stable regular file:
+All three CLIs take an optional profile, an operation and a readable, stable regular file:
 
 ```sh
-sh src/yamx.sh validate examples/minimal.yaml
-sh src/yamx.sh parse examples/minimal.yaml > entries.tsv
-node src/cli.mjs generate entries.tsv
-lua5.1 src/cli.lua parse examples/minimal.yaml
+sh src/yamx.sh --profile M validate examples/minimal.yaml
+sh src/yamx.sh --profile M parse examples/minimal.yaml > entries.tsv
+node src/cli.mjs --profile M generate entries.tsv
+lua5.1 src/cli.lua --profile M parse examples/minimal.yaml
 ```
 
-By default, `parse` emits a restricted TSV representation: key, one TAB, value, LF.
+For M, `parse` emits a restricted TSV representation: key, one TAB, value, LF.
 YAM(M) values cannot contain tabs or newlines, so this transport is unambiguous.
 `generate` consumes that same representation. It is a development interface,
 not a general-purpose TSV format or a commitment for future profiles.
 
-B uses typed preorder node records, carrying depth, kind, key and value:
+B, the default, uses typed preorder node records, carrying depth, kind, key and value:
 
 ```sh
-sh src/yamx.sh --profile B parse examples/balanced.yaml > nodes.tsv
-node src/cli.mjs --profile B generate nodes.tsv
+sh src/yamx.sh parse examples/balanced.yaml > nodes.tsv
+node src/cli.mjs generate nodes.tsv
 ```
 
 See [B's node transport](docs/balanced.md#node-transport) for the record contract.
@@ -127,20 +127,20 @@ See [B's node transport](docs/balanced.md#node-transport) for the record contrac
 M values stay strings, B keeps integers, booleans and null:
 
 ```sh
-sh src/yamx.sh --profile B json examples/balanced.yaml
+sh src/yamx.sh json examples/balanced.yaml
 ```
 
 ```js
 import { parse, generate, toJSON, validate } from './src/yamx.mjs';
 
-const text = "name: 'yamx'\n";
-validate(text);                    // returns undefined, or throws YamxError
-parse(text);                       // [['name', 'yamx']]
-generate([['name', 'yamx']]);       // "name: 'yamx'\n"
+const tree = parse('items:\n  - shell\n  - portable\n'); // B: Map + array
+generate(tree);
+toJSON('count: 3\n');             // '{\n  "count": 3\n}\n'
 
-const tree = parse('items:\n  - shell\n  - portable\n', 'B'); // Map + array
-generate(tree, 'B');
-toJSON('count: 3\n', 'B');        // '{\n  "count": 3\n}\n'
+const text = "name: 'yamx'\n";
+validate(text, 'M');               // returns undefined, or throws YamxError
+parse(text, 'M');                  // [['name', 'yamx']]
+generate([['name', 'yamx']], 'M');  // "name: 'yamx'\n"
 ```
 
 ## Web page

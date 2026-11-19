@@ -3,8 +3,8 @@
 YAM(B) bundles block collections, readable scalar spellings, and comments while
 keeping parsing line-oriented. It is a strict language superset of YAM(M): every
 Minimal document is accepted with the same decoded mapping meaning (including
-the inherited key-length exception below). B is selected
-explicitly; M remains the default. Names alone define no other relationships.
+the inherited key-length exception below). B is the default
+of the combined interfaces; M is selected explicitly. Names alone define no other relationships.
 YAMX is experimental; profile grammars can evolve with their implementations
 and executable specifications, without formal migrations.
 
@@ -103,7 +103,7 @@ sh src/yamx.sh --profile B parse examples/balanced.yaml > nodes.tsv
 node src/cli.mjs --profile B generate nodes.tsv
 ```
 
-M's default invocation, pair-list API, and restricted TSV remain unchanged.
+M's pair-list API and restricted TSV are unchanged; select them with `'M'` / `--profile M`.
 Both CLIs share M's stable-file, I/O, exit-code, and atomic-output contracts.
 B diagnostics also use `CODE line N:`; grammar/layout failures use `E_SYNTAX`,
 unrepresentable scalars `E_STRING`, depth violations `E_DEPTH`, and existing

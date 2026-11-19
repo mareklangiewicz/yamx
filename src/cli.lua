@@ -1,7 +1,7 @@
 -- Invoke through lua5.1, luajit or a newer Lua interpreter.
 local directory = arg[0]:match('^(.*[/\\])') or './'
 local yamx = dofile(directory .. 'yamx.lua')
-local selected, offset = 'M', 1
+local selected, offset = 'B', 1
 if arg[1] == '--profile' then selected, offset = arg[2], 3 end
 local operation, file = arg[offset], arg[offset + 1]
 if (selected ~= 'M' and selected ~= 'B') or not file or arg[offset + 2]

@@ -13,13 +13,13 @@ local function badvalue(value, code)
   rejects(code or 'E_STRING', nil, function() y.generate(value, 'B') end)
 end
 if not standalone then
-  local parsed = y.parse("z: ''\na: '  x  '\n")
+  local parsed = y.parse("z: ''\na: '  x  '\n", 'M')
   assert(parsed[1][1] == 'z' and parsed[1][2] == '')
   assert(parsed[2][1] == 'a' and parsed[2][2] == '  x  ')
-  assert(y.generate(parsed) == "z: ''\na: '  x  '\n")
-  assert(y.validate("a: 'x'\n") == nil)
-  assert(y.generate_transport(parsed) == 'z\t\na\t  x  \n')
-  assert(y.generate(y.parse_transport('a\tx\n')) == "a: 'x'\n")
+  assert(y.generate(parsed, 'M') == "z: ''\na: '  x  '\n")
+  assert(y.validate("a: 'x'\n", 'M') == nil)
+  assert(y.generate_transport(parsed, 'M') == 'z\t\na\t  x  \n')
+  assert(y.generate(y.parse_transport('a\tx\n', 'M'), 'M') == "a: 'x'\n")
 end
 local doc = "z: null\na:\n  - false\n  - []\n  - {}\n  - 'can''t'\nnumber: 9007199254740991\nnegative: -9007199254740991\nzero: -0\n"
 local b = y.parse(doc, 'B')
@@ -49,7 +49,7 @@ for byte = 0, 255 do
   if ok then assert(result[1][2] == c) end
   if not standalone then
     local m = "value: '" .. c .. "'\n"
-    ok, result = pcall(y.parse, m)
+    ok, result = pcall(y.parse, m, 'M')
     assert(ok == (printable and byte ~= 39), 'M byte ' .. byte)
     if ok then assert(result[1][2] == c) end
   end
@@ -60,11 +60,11 @@ end
 rejects('E_DUPLICATE', 4, function() y.parse('# comment\na: 1\n\na: 2\n', 'B') end)
 rejects('E_NEWLINE', 2, function() y.parse('a: x\nb: x', 'B') end)
 if not standalone then
-  rejects('E_EMPTY', 1, function() y.generate({}) end)
-  rejects('E_SYNTAX', 1, function() y.generate({[2] = {'a', 'x'}}) end)
-  rejects('E_SYNTAX', 1, function() y.generate({{'a', 'x', 'extra'}}) end)
-  rejects('E_STRING', 1, function() y.generate({{'a', "can't"}}) end)
-  rejects('E_DUPLICATE', 2, function() y.generate({{'a', 'x'}, {'a', 'y'}}) end)
+  rejects('E_EMPTY', 1, function() y.generate({}, 'M') end)
+  rejects('E_SYNTAX', 1, function() y.generate({[2] = {'a', 'x'}}, 'M') end)
+  rejects('E_SYNTAX', 1, function() y.generate({{'a', 'x', 'extra'}}, 'M') end)
+  rejects('E_STRING', 1, function() y.generate({{'a', "can't"}}, 'M') end)
+  rejects('E_DUPLICATE', 2, function() y.generate({{'a', 'x'}, {'a', 'y'}}, 'M') end)
 end
 badvalue({})
 badvalue(y.null, 'E_SYNTAX')
@@ -91,17 +91,21 @@ badvalue(too_deep, 'E_DEPTH')
 -- Metamethods must not manufacture missing values or execute during generation.
 local fake = setmetatable({}, { __index = function() error('unexpected __index') end })
 badvalue(fake)
-if not standalone then rejects('E_SYNTAX', nil, function() y.generate({fake}) end) end
+if not standalone then rejects('E_SYNTAX', nil, function() y.generate({fake}, 'M') end) end
 for _, fn in ipairs({y.parse, y.validate, y.generate, y.parse_transport, y.generate_transport}) do
   assert(not pcall(fn, {}, 'X'))
 end
 assert(not pcall(y.parse, {}))
 assert(not pcall(y.map, 'x'))
 assert(not pcall(y.seq, y.map()))
-if standalone then
+-- B is the default in both the combined and the standalone B library.
+do
   local b = y.parse("a: false\n")
   assert(y.kind(b) == 'map' and b[1][2] == false)
   assert(y.generate(b) == "a: false\n")
+  assert(y.to_json("a: false\n") == '{\n  "a": false\n}\n')
+end
+if standalone then
   for _, fn in ipairs({y.parse, y.validate, y.generate, y.parse_transport, y.generate_transport}) do
     assert(not pcall(fn, {}, 'M'))
   end
@@ -114,9 +118,9 @@ assert(y.to_json('[]\n', 'B') == '[]\n' and y.to_json('{}\n', 'B') == '{}\n')
 rejects('E_DUPLICATE', 3, function() y.to_json('a:\n  b: 1\n  b: 2\n', 'B') end)
 if not standalone then
 local m_text = "count: '123'\n__proto__: 'say \"hi\" C:\\'\nconstructor: ''\n"
-  assert(y.to_json(m_text) == '{\n  "count": "123",\n  "__proto__": "say \\"hi\\" C:\\\\",\n  "constructor": ""\n}\n')
-  rejects('E_DUPLICATE', 2, function() y.to_json("a: 'x'\na: 'y'\n") end)
-  rejects('E_NEWLINE', 1, function() y.to_json("a: 'x'") end)
+  assert(y.to_json(m_text, 'M') == '{\n  "count": "123",\n  "__proto__": "say \\"hi\\" C:\\\\",\n  "constructor": ""\n}\n')
+  rejects('E_DUPLICATE', 2, function() y.to_json("a: 'x'\na: 'y'\n", 'M') end)
+  rejects('E_NEWLINE', 1, function() y.to_json("a: 'x'", 'M') end)
   assert(not pcall(y.to_json, {}))
 end
 print('Lua API contracts passed')

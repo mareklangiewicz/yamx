@@ -5,7 +5,7 @@ import { yamlNodes, nodeText, transportNodes, nodesYaml, validateBalanced } from
 // @balanced-end
 
 const args = process.argv.slice(2);
-let profile = 'M';
+let profile = 'B';
 if (args[0] === '--profile') { args.shift(); profile = args.shift(); }
 const [operation, file, ...extra] = args;
 if (!['M', 'B'].includes(profile) || !file || extra.length || !['validate', 'parse', 'generate', 'json'].includes(operation)) {
@@ -36,11 +36,11 @@ try {
         throw new YamxError('E_SYNTAX', index + 1, 'expected key TAB value');
       return fields;
     });
-    result = generate(entries);
+    result = generate(entries, 'M');
   } else if (operation === 'validate') {
-    validate(text);
+    validate(text, 'M');
   } else {
-    result = parse(text).map(([key, value]) => `${key}\t${value}\n`).join('');
+    result = parse(text, 'M').map(([key, value]) => `${key}\t${value}\n`).join('');
   }
 // @minimal-end
   // Synchronous writes make output errors part of the CLI exit contract.

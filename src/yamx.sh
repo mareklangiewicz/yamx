@@ -14,7 +14,7 @@ io_error() {
 }
 
 number=1
-profile=M
+profile=B
 if [ "${1:-}" = --profile ]; then
   [ "$#" -ge 2 ] || { printf 'missing profile\n' >&2; exit 2; }
   profile=$2

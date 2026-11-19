@@ -1,9 +1,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { parse as yamlParse } from 'yaml';
-import { jsLibrary } from './helpers.mjs';
-const { parse, generate } = await import(jsLibrary);
-import { cli, fixture } from './helpers.mjs';
+import { minimalCli, fixture, minimalLibrary } from './helpers.mjs';
+const { parse, generate } = await minimalLibrary();
 
 function random(seed) {
   let state = seed;
@@ -28,10 +27,10 @@ test('seeded YAM(M) documents agree with independently generated values and YAML
       const oracle = yamlParse(text, { version: '1.2', schema: 'core', mapAsMap: true });
       assert.deepEqual([...oracle], entries, `independent YAML oracle, seed ${seed}`);
       const tsv = entries.map(([key, value]) => `${key}\t${value}\n`).join('');
-      const parsed = cli(implementation, ['parse', write(text)]);
+      const parsed = minimalCli(implementation, ['parse', write(text)]);
       assert.equal(parsed.status, 0, `seed ${seed}: ${parsed.stderr}`);
       assert.equal(parsed.stdout, tsv);
-      const emitted = cli(implementation, ['generate', write(tsv)]);
+      const emitted = minimalCli(implementation, ['generate', write(tsv)]);
       assert.equal(emitted.status, 0, `seed ${seed}: ${emitted.stderr}`);
       assert.equal(emitted.stdout, text);
     }
@@ -46,7 +45,7 @@ test('near misses at grammar boundaries are rejected with no partial output', ()
     `\uFEFF${valid}`, valid + '\n', valid.replace('text', 'téxt')];
   for (const implementation of ['shell', 'js', 'lua']) for (const text of invalid) {
     assert.throws(() => parse(text));
-    const result = cli(implementation, ['parse', write(text)]);
+    const result = minimalCli(implementation, ['parse', write(text)]);
     assert.equal(result.status, 1, JSON.stringify(text));
     assert.equal(result.stdout, '');
   }
@@ -61,7 +60,7 @@ test('long keys and values complete within the subprocess smoke-test budget', ()
   assert.deepEqual(parse(text), entries);
   assert.equal(generate(entries), text);
   for (const implementation of ['shell', 'js', 'lua']) for (const operation of ['parse', 'validate', 'generate']) {
-    const result = cli(implementation, [operation, write(operation === 'generate' ? tsv : text)]);
+    const result = minimalCli(implementation, [operation, write(operation === 'generate' ? tsv : text)]);
     assert.equal(result.status, 0, result.stderr);
     assert.equal(result.stdout, operation === 'validate' ? '' : operation === 'parse' ? tsv : text);
   }

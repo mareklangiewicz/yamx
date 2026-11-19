@@ -35,7 +35,7 @@ try {
           for (let sample = 0; sample < (full ? 3 : 1); sample++) {
             if (performance.now() - started > 240000) throw new Error('benchmark total time budget exceeded');
             const before = performance.now();
-            const result = spawnSync(command, [script, operation, input], {
+            const result = spawnSync(command, [script, '--profile', 'M', operation, input], {
               cwd: root, stdio: 'ignore', timeout: 15000,
             });
             if (result.error || result.signal) throw result.error || new Error(`${command}: ${result.signal}`);

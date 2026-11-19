@@ -3,16 +3,15 @@ import assert from 'node:assert/strict';
 import { mkdtempSync, writeFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { cli, fixture } from './helpers.mjs';
-import { jsLibrary } from './helpers.mjs';
-const { generate, parse } = await import(jsLibrary);
+import { minimalCli, fixture, minimalLibrary } from './helpers.mjs';
+const { generate, parse } = await minimalLibrary();
 
 function withShell(run, implementation = 'shell') {
   const directory = mkdtempSync(join(tmpdir(), 'yamx-test-'));
   const file = join(directory, 'input');
   const shell = (operation, input) => {
     writeFileSync(file, input);
-    const result = cli(implementation, [operation, file], { encoding: null });
+    const result = minimalCli(implementation, [operation, file], { encoding: null });
     if (result.error) throw result.error;
     assert.equal(result.signal, null);
     return { status: result.status, stdout: result.stdout, stderr: result.stderr.toString() };
@@ -63,10 +62,10 @@ for (const profile of (process.env.YAMX_DISTRIBUTION ? ['M'] : ['M', 'B'])) test
   const input = profile === 'M' ? "a: 'x'\nb: ''\n" : "a:\n  - null\n  - false\n  - {}\nb: 'can''t'\n";
   const prefix = ['--profile', profile];
   for (const source of ['shell', 'js', 'lua']) {
-    const parsed = cli(source, [...prefix, 'parse', write(input)]);
+    const parsed = minimalCli(source, [...prefix, 'parse', write(input)]);
     assert.equal(parsed.status, 0, parsed.stderr);
     for (const target of ['shell', 'js', 'lua']) {
-      const generated = cli(target, [...prefix, 'generate', write(parsed.stdout)]);
+      const generated = minimalCli(target, [...prefix, 'generate', write(parsed.stdout)]);
       assert.equal(generated.status, 0, generated.stderr);
       assert.equal(generated.stdout, input);
     }
