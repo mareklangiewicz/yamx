@@ -28,8 +28,16 @@ independent. The editors, controls and switcher have responsive small-screen
 styles, including stacked panes, larger touch targets and safe-area spacing.
 
 The HTML includes an isolated snapshot of the existing JS parser at c0c4de5.
-Its JSON adapter is prototype-only. The agreed public JSON-export API/CLI is not
-implemented. Repository specification links target the prototype source branch.
+Its JSON adapter is prototype-only. JSON export (`json FILE`, `toJSON`, Lua
+`to_json`) has since landed on main, but the page does not use it yet (#4, #5).
+The profile specification links in "Small by design" target the prototype
+source branch.
+
+The "Copy one readable file" section (issue #10) appears in all three layouts.
+Its links point to the standalone files on `main`. Its sizes and revisions are
+embedded `copyGuide` data: the output of `node scripts/copy-guide.mjs --json` on
+the main commit named in the page. Refresh that data whenever `dist/` changes on
+main. The README and `docs/distributions.md` on main hold the drift-checked copy.
 
 This is throwaway source retained on `prototype/pages-introduction`, not main.
 Do not merge it as the production site. Await Marek's visual/content feedback
