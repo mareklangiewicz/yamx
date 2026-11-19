@@ -83,7 +83,7 @@ let survivors = 0;
 for (const [name, file, before, after] of mutations) {
   const directory = mkdtempSync(join(tmpdir(), 'yamx-mutant-'));
   try {
-    for (const folder of ['src', 'spec', 'examples', 'scripts', 'dist']) cpSync(join(root, folder), join(directory, folder), { recursive: true });
+    for (const folder of ['LICENSE', 'src', 'spec', 'examples', 'scripts', 'dist']) cpSync(join(root, folder), join(directory, folder), { recursive: true });
     symlinkSync(join(root, 'node_modules'), join(directory, 'node_modules'), 'dir');
     const path = join(directory, file);
     const source = readFileSync(path, 'utf8');

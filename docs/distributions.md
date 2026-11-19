@@ -8,10 +8,14 @@ Minimal does not load or contain Balanced's parser; Balanced accepts M documents
 through its own B parser without a separate Minimal file. The combined interfaces
 under `src/` retain M as the default and explicit B selection.
 
-The reuse license is still awaiting Marek's decision in
-[issue #7](https://github.com/mareklangiewicz/yamx/issues/7). These artifacts carry
-a pending-license notice, not a grant of copying/redistribution rights. Final
-copy/download guidance and page integration remain in issue #10.
+YAMX is available under the [MIT License](../LICENSE). Every generated file
+starts with its copyright line, `SPDX-License-Identifier: MIT` and a link to the
+full license text. When copying a file, keep that header intact. For the
+complete license wording, also keep a copy of `LICENSE` alongside, or wherever
+your project collects third-party notices. `LICENSE` is the single source of the
+notice: `scripts/distribute.mjs` reads its copyright line, and the drift gate
+rejects artifacts whose notice no longer matches it. Final copy/download
+guidance and page integration remain in issue #10.
 
 ## Complete runtime file sets and sizes
 
@@ -24,21 +28,21 @@ Minimal files under `dist/minimal/`:
 
 | Usage | Required files | Bytes | Lines | Runtime dependencies |
 | --- | --- | ---: | ---: | --- |
-| Shell CLI | `yamx.sh` | 5,984 | 170 | POSIX shell; `od`, `awk`, `sort`, `cat`, `mkdir`, `rm`; private temporary storage |
-| JavaScript library | `yamx.mjs` | 4,565 | 105 | Native ES modules and language builtins |
-| JavaScript CLI | `yamx.mjs`, `cli.mjs` | 6,548 | 149 | Node 24+; Node builtins |
-| Lua library | `yamx.lua` | 5,768 | 147 | Lua 5.1/LuaJIT or newer; builtins only |
-| Lua CLI | `yamx.lua`, `cli.lua` | 7,881 | 186 | Lua plus POSIX sh/test for regular-file checks |
+| Shell CLI | `yamx.sh` | 6,059 | 172 | POSIX shell; `od`, `awk`, `sort`, `cat`, `mkdir`, `rm`; private temporary storage |
+| JavaScript library | `yamx.mjs` | 4,642 | 107 | Native ES modules and language builtins |
+| JavaScript CLI | `yamx.mjs`, `cli.mjs` | 6,702 | 153 | Node 24+; Node builtins |
+| Lua library | `yamx.lua` | 5,845 | 149 | Lua 5.1/LuaJIT or newer; builtins only |
+| Lua CLI | `yamx.lua`, `cli.lua` | 8,035 | 190 | Lua plus POSIX sh/test for regular-file checks |
 
 Balanced files under `dist/balanced/`:
 
 | Usage | Required files | Bytes | Lines | Runtime dependencies |
 | --- | --- | ---: | ---: | --- |
-| Shell CLI | `yamx.sh` | 12,528 | 336 | POSIX shell; `od`, `awk`, `sort`, `cat`, `mkdir`, `rm`; private temporary storage |
-| JavaScript library | `yamx.mjs` | 11,961 | 271 | Native ES modules and language builtins |
-| JavaScript CLI | `yamx.mjs`, `cli.mjs` | 13,713 | 307 | Node 24+; Node builtins |
-| Lua library | `yamx.lua` | 15,178 | 358 | Lua 5.1/LuaJIT or newer; builtins only |
-| Lua CLI | `yamx.lua`, `cli.lua` | 17,291 | 397 | Lua plus POSIX sh/test for regular-file checks |
+| Shell CLI | `yamx.sh` | 12,603 | 338 | POSIX shell; `od`, `awk`, `sort`, `cat`, `mkdir`, `rm`; private temporary storage |
+| JavaScript library | `yamx.mjs` | 12,038 | 273 | Native ES modules and language builtins |
+| JavaScript CLI | `yamx.mjs`, `cli.mjs` | 13,867 | 311 | Node 24+; Node builtins |
+| Lua library | `yamx.lua` | 15,255 | 360 | Lua 5.1/LuaJIT or newer; builtins only |
+| Lua CLI | `yamx.lua`, `cli.lua` | 17,445 | 401 | Lua plus POSIX sh/test for regular-file checks |
 
 The B shell file embeds its POSIX awk parser; no adjacent `balanced.awk` is
 required. Both profiles retain the same runtime utility dependencies.

@@ -55,8 +55,8 @@ See the [complete grammar and CLI contract](docs/minimal.md).
 
 Readable profile-specific artifacts are available as a technical preview in
 [`dist/minimal`](dist/minimal) and [`dist/balanced`](dist/balanced). See the [complete file sets, measurements and
-assembly/verification process](docs/distributions.md); the reuse license decision
-is still pending.
+assembly/verification process](docs/distributions.md), including how to keep
+their license notices when copying.
 
 All three CLIs take an operation and a readable, stable regular file:
 
@@ -153,3 +153,7 @@ See [AGENTS.md](AGENTS.md) for contribution guidance.
 Both profiles currently inherit M's acceptance of keys longer than YAML's
 1,024-character implicit-key limit. This is a known YAML compatibility limitation;
 see [the profile specification](docs/minimal.md).
+
+## License
+
+[MIT](LICENSE), Copyright (c) 2026 Marek Langiewicz.

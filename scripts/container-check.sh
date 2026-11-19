@@ -1,7 +1,7 @@
 #!/bin/sh
 set -eu
 # Source is mounted read-only; all test scratch and copied code stay disposable.
-cp -R /src/src /src/dist /src/examples /src/spec /src/scripts /src/hooks /src/test /src/.shellspec /work/
+cp -R /src/LICENSE /src/src /src/dist /src/examples /src/spec /src/scripts /src/hooks /src/test /src/.shellspec /work/
 ln -s /opt/dependencies/node_modules /work/node_modules
 cd /work
 apk info -v
