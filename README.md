@@ -1,3 +1,7 @@
+> **Superseded.** Pages is now deployed by `.github/workflows/pages.yml` from
+> [`site/` on main](https://github.com/mareklangiewicz/yamx/tree/main/site) (issue #11). This branch is no
+> longer the Pages source and is kept only as the record of the published preview.
+
 # YAMX review preview
 
 GitHub Pages deployment artifact, published with Marek's authorization.
